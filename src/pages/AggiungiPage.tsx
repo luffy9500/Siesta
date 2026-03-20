@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { differenceInCalendarDays, parseISO, eachDayOfInterval, getDay, format } from 'date-fns'
-import { useAuth } from '../hooks/useAuth'
 import { useAssenze } from '../hooks/useAssenze'
 import { useSettings } from '../hooks/useSettings'
 import type { AbsenceType } from '../types'
@@ -10,20 +9,17 @@ import { TIPO_LABELS, TIPO_COLORS } from '../types'
 const TIPI: AbsenceType[] = ['ferie', 'permessi', 'rol', 'malattia']
 
 export default function AggiungiPage() {
-  const { user } = useAuth()
-  const { add } = useAssenze(user?.id)
-  const { settings } = useSettings(user?.id)
+  const { add } = useAssenze()
+  const { settings } = useSettings()
   const navigate = useNavigate()
 
   const [tipo, setTipo] = useState<AbsenceType>('ferie')
   const [dataInizio, setDataInizio] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [dataFine, setDataFine] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [oreCustom, setOreCustom] = useState<string>('')
+  const [oreCustom, setOreCustom] = useState('')
   const [note, setNote] = useState('')
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Calcola automaticamente le ore in base ai giorni lavorativi
   const oreCalcolate = useMemo(() => {
     if (!dataInizio || !dataFine) return 0
     try {
@@ -40,19 +36,12 @@ export default function AggiungiPage() {
 
   const oreTotali = oreCustom !== '' ? parseFloat(oreCustom) : oreCalcolate
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     if (oreTotali <= 0) { setError('Le ore devono essere maggiori di 0'); return }
-    setLoading(true)
-    try {
-      await add({ tipo, data_inizio: dataInizio, data_fine: dataFine, ore: oreTotali, note: note || undefined })
-      navigate('/')
-    } catch (err) {
-      setError('Errore durante il salvataggio')
-    } finally {
-      setLoading(false)
-    }
+    add({ tipo, data_inizio: dataInizio, data_fine: dataFine, ore: oreTotali, note: note || undefined })
+    navigate('/')
   }
 
   return (
@@ -60,20 +49,18 @@ export default function AggiungiPage() {
       <h2 className="text-lg font-bold text-gray-800 mb-4">Aggiungi assenza</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Tipo */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
           <div className="grid grid-cols-2 gap-2">
             {TIPI.map(t => {
               const c = TIPO_COLORS[t]
-              const active = tipo === t
               return (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setTipo(t)}
                   className={`py-2.5 rounded-xl border-2 text-sm font-semibold transition
-                    ${active ? `${c.border} ${c.bg} ${c.text}` : 'border-gray-200 text-gray-500 hover:border-gray-300'}
+                    ${tipo === t ? `${c.border} ${c.bg} ${c.text}` : 'border-gray-200 text-gray-500 hover:border-gray-300'}
                   `}
                 >
                   {TIPO_LABELS[t]}
@@ -83,7 +70,6 @@ export default function AggiungiPage() {
           </div>
         </div>
 
-        {/* Date */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Dal</label>
@@ -108,10 +94,9 @@ export default function AggiungiPage() {
           </div>
         </div>
 
-        {/* Ore */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Ore <span className="text-gray-400 font-normal">(calcolate automaticamente: {oreCalcolate}h)</span>
+            Ore <span className="text-gray-400 font-normal">(calcolate: {oreCalcolate}h)</span>
           </label>
           <input
             type="number"
@@ -124,7 +109,6 @@ export default function AggiungiPage() {
           />
         </div>
 
-        {/* Note */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Note (opzionale)</label>
           <input
@@ -136,7 +120,6 @@ export default function AggiungiPage() {
           />
         </div>
 
-        {/* Riepilogo */}
         <div className={`rounded-xl p-3 ${TIPO_COLORS[tipo].bg} ${TIPO_COLORS[tipo].text}`}>
           <p className="text-sm font-medium">
             {TIPO_LABELS[tipo]}: <strong>{oreTotali}h</strong>
@@ -148,10 +131,9 @@ export default function AggiungiPage() {
 
         <button
           type="submit"
-          disabled={loading}
-          className="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold py-3.5 rounded-2xl transition disabled:opacity-50 shadow-md"
+          className="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold py-3.5 rounded-2xl transition shadow-md"
         >
-          {loading ? 'Salvataggio…' : 'Salva assenza'}
+          Salva assenza
         </button>
       </form>
     </div>

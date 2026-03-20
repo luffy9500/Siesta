@@ -1,37 +1,24 @@
-import { NavLink, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
+import { NavLink } from 'react-router-dom'
 
 const NAV = [
-  { to: '/',          label: 'Home',       icon: '🏠' },
-  { to: '/calendario',label: 'Calendario', icon: '📅' },
-  { to: '/aggiungi',  label: 'Aggiungi',   icon: '➕' },
-  { to: '/saldi',     label: 'Saldi',      icon: '💼' },
+  { to: '/',             label: 'Home',         icon: '🏠' },
+  { to: '/calendario',   label: 'Calendario',   icon: '📅' },
+  { to: '/aggiungi',     label: 'Aggiungi',     icon: '➕' },
+  { to: '/saldi',        label: 'Saldi',        icon: '💼' },
   { to: '/impostazioni', label: 'Impostazioni', icon: '⚙️' },
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { signOut } = useAuth()
-  const navigate = useNavigate()
-
-  const handleSignOut = async () => {
-    await signOut()
-    navigate('/login')
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col max-w-lg mx-auto">
-      {/* Header */}
-      <header className="bg-teal-700 text-white px-4 py-3 flex items-center justify-between shadow-md sticky top-0 z-10">
+      <header className="bg-teal-700 text-white px-4 py-3 shadow-md sticky top-0 z-10">
         <h1 className="text-xl font-bold tracking-tight">🌴 Siesta</h1>
-        <button onClick={handleSignOut} className="text-sm text-teal-200 hover:text-white transition">Esci</button>
       </header>
 
-      {/* Content */}
       <main className="flex-1 overflow-y-auto pb-20">
         {children}
       </main>
 
-      {/* Bottom Nav */}
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white border-t border-gray-200 flex z-10">
         {NAV.map(({ to, label, icon }) => (
           <NavLink

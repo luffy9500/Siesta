@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '../hooks/useAuth'
 import { useSettings } from '../hooks/useSettings'
 
 const GIORNI = [
@@ -13,8 +12,7 @@ const GIORNI = [
 ]
 
 export default function ImpostazioniPage() {
-  const { user } = useAuth()
-  const { settings, save } = useSettings(user?.id)
+  const { settings, save } = useSettings()
   const [ore, setOre] = useState(settings.ore_giornaliere)
   const [giorni, setGiorni] = useState<number[]>(settings.giorni_lavorativi)
   const [saved, setSaved] = useState(false)
@@ -28,8 +26,8 @@ export default function ImpostazioniPage() {
     setGiorni(prev => prev.includes(v) ? prev.filter(g => g !== v) : [...prev, v])
   }
 
-  const handleSave = async () => {
-    await save({ ore_giornaliere: ore, giorni_lavorativi: giorni })
+  const handleSave = () => {
+    save({ ore_giornaliere: ore, giorni_lavorativi: giorni })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -38,11 +36,10 @@ export default function ImpostazioniPage() {
     <div className="p-4">
       <h2 className="text-lg font-bold text-gray-800 mb-6">Impostazioni</h2>
 
-      <div className="space-y-6">
-        {/* Ore giornaliere */}
+      <div className="space-y-4">
         <div className="bg-white rounded-2xl border border-gray-200 p-4">
           <label className="block text-sm font-bold text-gray-700 mb-1">Ore per giornata lavorativa</label>
-          <p className="text-xs text-gray-500 mb-3">Usato per il calcolo automatico delle ore nelle assenze</p>
+          <p className="text-xs text-gray-500 mb-3">Usato per il calcolo automatico delle ore</p>
           <div className="flex items-center gap-3">
             <input
               type="number"
@@ -57,7 +54,6 @@ export default function ImpostazioniPage() {
           </div>
         </div>
 
-        {/* Giorni lavorativi */}
         <div className="bg-white rounded-2xl border border-gray-200 p-4">
           <label className="block text-sm font-bold text-gray-700 mb-1">Giorni lavorativi</label>
           <p className="text-xs text-gray-500 mb-3">Seleziona i giorni che contano come lavorativi</p>
@@ -76,10 +72,8 @@ export default function ImpostazioniPage() {
           </div>
         </div>
 
-        {/* Account */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-4">
-          <p className="text-sm font-bold text-gray-700 mb-1">Account</p>
-          <p className="text-xs text-gray-500 break-all">{user?.email}</p>
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <p className="text-xs text-amber-700 font-medium">⚠️ I dati sono salvati localmente sul dispositivo. Cancellare i dati del browser rimuoverà tutte le assenze e i saldi.</p>
         </div>
       </div>
 

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
-import { useAuth } from '../hooks/useAuth'
 import { useSaldi } from '../hooks/useSaldi'
 import type { AbsenceType } from '../types'
 import { TIPO_LABELS, TIPO_COLORS } from '../types'
@@ -14,28 +13,21 @@ const MESI = Array.from({ length: 12 }, (_, i) => ({
 }))
 
 export default function SaldiPage() {
-  const { user } = useAuth()
-  const { saldi, upsert } = useSaldi(user?.id)
-
+  const { saldi, upsert } = useSaldi()
   const now = new Date()
   const [anno, setAnno] = useState(now.getFullYear())
   const [mese, setMese] = useState(now.getMonth() + 1)
   const [values, setValues] = useState<Partial<Record<AbsenceType, string>>>({})
   const [saved, setSaved] = useState(false)
 
-  const getExisting = (tipo: AbsenceType) => {
-    return saldi.find(s => s.anno === anno && s.mese === mese && s.tipo === tipo)
-  }
+  const getExisting = (tipo: AbsenceType) =>
+    saldi.find(s => s.anno === anno && s.mese === mese && s.tipo === tipo)
 
-  const handleSave = async () => {
-    const promises = TIPI.map(tipo => {
+  const handleSave = () => {
+    TIPI.forEach(tipo => {
       const val = values[tipo]
-      if (val !== undefined && val !== '') {
-        return upsert(anno, mese, tipo, parseFloat(val))
-      }
-      return Promise.resolve()
+      if (val !== undefined && val !== '') upsert(anno, mese, tipo, parseFloat(val))
     })
-    await Promise.all(promises)
     setValues({})
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -48,7 +40,6 @@ export default function SaldiPage() {
       <h2 className="text-lg font-bold text-gray-800 mb-1">Saldi da busta paga</h2>
       <p className="text-sm text-gray-500 mb-4">Inserisci le ore riportate in busta ogni mese.</p>
 
-      {/* Mese / Anno selector */}
       <div className="flex gap-2 mb-6">
         <select
           value={mese}
@@ -89,9 +80,7 @@ export default function SaldiPage() {
                 <span className="text-sm font-semibold text-gray-500">ore</span>
               </div>
               {existing && (
-                <p className="text-xs mt-1 text-gray-500">
-                  Ultimo valore: <strong>{existing.ore}h</strong>
-                </p>
+                <p className="text-xs mt-1 text-gray-500">Ultimo valore: <strong>{existing.ore}h</strong></p>
               )}
             </div>
           )
@@ -106,7 +95,6 @@ export default function SaldiPage() {
         {saved ? '✓ Salvato!' : 'Salva saldi'}
       </button>
 
-      {/* Storico */}
       {saldi.length > 0 && (
         <div className="mt-8">
           <h3 className="text-sm font-bold text-gray-600 mb-3">Storico</h3>

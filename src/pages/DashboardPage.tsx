@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAfter, parseISO, startOfDay } from 'date-fns'
 import BalanceCard from '../components/BalanceCard'
-import { useAuth } from '../hooks/useAuth'
 import { useSaldi } from '../hooks/useSaldi'
 import { useAssenze } from '../hooks/useAssenze'
 import type { AbsenceType } from '../types'
@@ -10,9 +9,8 @@ import type { AbsenceType } from '../types'
 const TIPI: AbsenceType[] = ['ferie', 'permessi', 'rol', 'malattia']
 
 export default function DashboardPage() {
-  const { user } = useAuth()
-  const { getLatest } = useSaldi(user?.id)
-  const { assenze } = useAssenze(user?.id)
+  const { getLatest } = useSaldi()
+  const { assenze } = useAssenze()
   const navigate = useNavigate()
   const today = startOfDay(new Date())
 
@@ -20,8 +18,6 @@ export default function DashboardPage() {
     return TIPI.map(tipo => {
       const latest = getLatest(tipo)
       const saldoBusta = latest?.ore ?? null
-
-      // assenze passate (fino a oggi) dal mese/anno del saldo
       const salMese = latest ? new Date(latest.anno, latest.mese - 1, 1) : null
 
       const passate = assenze.filter(a =>
@@ -30,8 +26,7 @@ export default function DashboardPage() {
         (salMese ? !isAfter(salMese, parseISO(a.data_inizio)) : true)
       )
       const future = assenze.filter(a =>
-        a.tipo === tipo &&
-        isAfter(parseISO(a.data_inizio), today)
+        a.tipo === tipo && isAfter(parseISO(a.data_inizio), today)
       )
 
       const oreUsate = passate.reduce((sum, a) => sum + a.ore, 0)
@@ -58,7 +53,6 @@ export default function DashboardPage() {
         <BalanceCard key={s.tipo} {...s} />
       ))}
 
-      {/* Quick add */}
       <button
         onClick={() => navigate('/aggiungi')}
         className="w-full mt-2 bg-teal-700 hover:bg-teal-800 text-white font-semibold py-3.5 rounded-2xl transition shadow-md"
