@@ -39,9 +39,12 @@ export const TIPO_LABELS: Record<AbsenceType, string> = {
   malattia: 'Malattia',
 }
 
-export const TIPO_COLORS: Record<AbsenceType, { bg: string; text: string; border: string }> = {
-  ferie:    { bg: 'bg-teal-100',  text: 'text-teal-800',  border: 'border-teal-400' },
-  permessi: { bg: 'bg-blue-100',  text: 'text-blue-800',  border: 'border-blue-400' },
-  rol:      { bg: 'bg-purple-100',text: 'text-purple-800',border: 'border-purple-400' },
-  malattia: { bg: 'bg-red-100',   text: 'text-red-800',   border: 'border-red-400' },
+export const TIPO_COLORS: Record<AbsenceType, {
+  bg: string; text: string; border: string
+  accent: string; bar: string; pill: string
+}> = {
+  ferie:    { bg: 'bg-teal-50',   text: 'text-teal-700',   border: 'border-teal-400',   accent: 'bg-teal-500',   bar: 'bg-teal-500',   pill: 'bg-teal-100 text-teal-700'   },
+  permessi: { bg: 'bg-sky-50',    text: 'text-sky-700',    border: 'border-sky-400',    accent: 'bg-sky-500',    bar: 'bg-sky-500',    pill: 'bg-sky-100 text-sky-700'     },
+  rol:      { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-400', accent: 'bg-violet-500', bar: 'bg-violet-500', pill: 'bg-violet-100 text-violet-700'},
+  malattia: { bg: 'bg-rose-50',   text: 'text-rose-700',   border: 'border-rose-400',   accent: 'bg-rose-500',   bar: 'bg-rose-500',   pill: 'bg-rose-100 text-rose-700'   },
 }
