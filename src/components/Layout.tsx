@@ -11,8 +11,11 @@ const NAV = [
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col max-w-lg mx-auto">
-      <header className="bg-teal-700 text-white px-4 pb-3 shadow-md sticky top-0 z-10 pt-safe-top">
-        <h1 className="text-xl font-bold tracking-tight">🌴 Siesta</h1>
+      <header className="bg-teal-600 text-white px-5 pb-3.5 shadow-md sticky top-0 z-10 pt-safe-top">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl leading-none">🌴</span>
+          <span className="text-lg font-bold tracking-tight">Siesta</span>
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto pb-nav-safe">
@@ -27,7 +30,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             end={to === '/'}
             className={({ isActive }) =>
               `flex-1 flex flex-col items-center py-2 text-xs gap-0.5 transition ${
-                isActive ? 'text-teal-700 font-semibold' : 'text-gray-500 hover:text-teal-600'
+                isActive ? 'text-teal-600 font-semibold' : 'text-gray-400 hover:text-teal-500'
               }`
             }
           >

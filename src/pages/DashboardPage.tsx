@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { isAfter, parseISO, startOfDay } from 'date-fns'
+import { isAfter, parseISO, startOfDay, format } from 'date-fns'
+import { it } from 'date-fns/locale'
 import BalanceCard from '../components/BalanceCard'
 import { useSaldi } from '../hooks/useSaldi'
 import { useAssenze } from '../hooks/useAssenze'
@@ -31,19 +32,24 @@ export default function DashboardPage() {
 
       const oreUsate = passate.reduce((sum, a) => sum + a.ore, 0)
       const orePianificate = future.reduce((sum, a) => sum + a.ore, 0)
-      const oreResidue = saldoBusta !== null ? Math.max(0, saldoBusta - oreUsate) : 0
 
-      return { tipo, saldoBusta, oreUsate, oreResidue, orePianificate }
+      return { tipo, saldoBusta, oreUsate, orePianificate }
     })
   }, [assenze, getLatest, today])
 
+  const dateLabel = format(today, "EEEE d MMMM", { locale: it })
+
   return (
-    <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-bold text-gray-800">Saldo attuale</h2>
+    <div className="p-4 space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-1">
+        <div>
+          <h2 className="text-lg font-bold text-gray-800">Saldo attuale</h2>
+          <p className="text-xs text-gray-400 capitalize">{dateLabel}</p>
+        </div>
         <button
           onClick={() => navigate('/saldi')}
-          className="text-xs text-teal-700 border border-teal-600 rounded-full px-3 py-1 hover:bg-teal-50"
+          className="text-xs text-teal-700 border border-teal-500 rounded-full px-3 py-1.5 font-medium hover:bg-teal-50 transition"
         >
           Aggiorna busta
         </button>
@@ -55,7 +61,7 @@ export default function DashboardPage() {
 
       <button
         onClick={() => navigate('/aggiungi')}
-        className="w-full mt-2 bg-teal-700 hover:bg-teal-800 text-white font-semibold py-3.5 rounded-2xl transition shadow-md"
+        className="w-full mt-2 bg-teal-600 active:bg-teal-800 text-white font-semibold py-3.5 rounded-2xl transition shadow-md text-sm tracking-wide"
       >
         + Aggiungi assenza
       </button>
