@@ -87,9 +87,9 @@ export default function AggiungiPage() {
           </div>
         </div>
 
-        {/* Dal / Al — stacked to avoid overflow */}
-        <div className="space-y-3">
-          <div>
+        {/* Dal / Al — side by side */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-1">Dal</label>
             <input
               type="date"
@@ -99,7 +99,7 @@ export default function AggiungiPage() {
               className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="block text-sm font-medium text-gray-700 mb-1">Al</label>
             <input
               type="date"
@@ -199,7 +199,6 @@ export default function AggiungiPage() {
                 value={oreInputTemp}
                 onChange={e => setOreInputTemp(e.target.value)}
                 className="flex-1 border border-gray-300 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500"
-                autoFocus
               />
               <button
                 type="button"
