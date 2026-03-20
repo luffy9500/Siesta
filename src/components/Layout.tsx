@@ -11,15 +11,15 @@ const NAV = [
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col max-w-lg mx-auto">
-      <header className="bg-teal-700 text-white px-4 py-3 shadow-md sticky top-0 z-10">
+      <header className="bg-teal-700 text-white px-4 pb-3 shadow-md sticky top-0 z-10 pt-safe-top">
         <h1 className="text-xl font-bold tracking-tight">🌴 Siesta</h1>
       </header>
 
-      <main className="flex-1 overflow-y-auto pb-20">
+      <main className="flex-1 overflow-y-auto pb-nav-safe">
         {children}
       </main>
 
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white border-t border-gray-200 flex z-10">
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white border-t border-gray-200 flex z-10 pb-safe-bottom">
         {NAV.map(({ to, label, icon }) => (
           <NavLink
             key={to}

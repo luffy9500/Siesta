@@ -14,3 +14,8 @@ body {
 #root {
   min-height: 100svh;
 }
+
+/* Safe area utilities for iOS PWA */
+.pt-safe-top    { padding-top: calc(0.75rem + env(safe-area-inset-top)); }
+.pb-safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.pb-nav-safe    { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
