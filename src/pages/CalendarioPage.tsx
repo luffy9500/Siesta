@@ -94,11 +94,11 @@ export default function CalendarioPage() {
               {dayAssenze.length > 0 && (
                 <div className="absolute inset-0 flex">
                   {dayAssenze.map((a, ai) => (
-                    <div key={ai} className={`flex-1 opacity-60 ${TIPO_COLORS[a.tipo].bg}`} />
+                    <div key={ai} className={`flex-1 ${TIPO_COLORS[a.tipo].cal}`} />
                   ))}
                 </div>
               )}
-              <span className={`relative z-10 font-medium ${dayAssenze.length > 0 ? TIPO_COLORS[dayAssenze[0].tipo].text : ''}`}>
+              <span className={`relative z-10 font-semibold ${dayAssenze.length > 0 ? TIPO_COLORS[dayAssenze[0].tipo].text : ''}`}>
                 {format(day, 'd')}
               </span>
             </button>
