@@ -87,29 +87,29 @@ export default function AggiungiPage() {
           </div>
         </div>
 
-        {/* Dal / Al — side by side */}
+        {/* Dal / Al — styled buttons with hidden native date input */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="min-w-0">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Dal</label>
-            <input
-              type="date"
-              required
-              value={dataInizio}
-              onChange={e => { setDataInizio(e.target.value); if (e.target.value > dataFine) setDataFine(e.target.value) }}
-              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
-          </div>
-          <div className="min-w-0">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Al</label>
-            <input
-              type="date"
-              required
-              min={dataInizio}
-              value={dataFine}
-              onChange={e => setDataFine(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
-          </div>
+          {([
+            { label: 'Dal', value: dataInizio, onChange: (v: string) => { setDataInizio(v); if (v > dataFine) setDataFine(v) }, min: undefined },
+            { label: 'Al',  value: dataFine,   onChange: (v: string) => setDataFine(v),                                         min: dataInizio },
+          ] as const).map(({ label, value, onChange, min }) => (
+            <div key={label} className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+              <div className="relative border border-gray-300 rounded-xl bg-white overflow-hidden">
+                <div className="px-3 py-2.5 text-base text-gray-800 pointer-events-none">
+                  {format(parseISO(value), 'd MMM yyyy')}
+                </div>
+                <input
+                  type="date"
+                  required
+                  value={value}
+                  min={min}
+                  onChange={e => onChange(e.target.value)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Ore — tap to open picker */}
