@@ -138,14 +138,23 @@ export default function ImpostazioniPage() {
     }
   }
 
-  const handleExportCal = async () => {
+  const handleExportCal = () => {
     const icsContent = generateICS(assenze)
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' })
-    const file = new File([blob], 'siesta-assenze.ics', { type: 'text/calendar' })
-    if (navigator.share && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: 'Siesta – Assenze' }) } catch { /* annullato */ }
+    const url = URL.createObjectURL(blob)
+
+    // iOS intercepts text/calendar blob URLs and shows "Aggiungi al Calendario"
+    // ONLY when navigated to directly (no download attribute, no Share API)
+    if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator as Navigator & { standalone?: boolean }).standalone) {
+      window.location.href = url
+      setTimeout(() => URL.revokeObjectURL(url), 8000)
     } else {
-      downloadBlob(blob, 'siesta-assenze.ics')
+      // Desktop: trigger download
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'siesta-assenze.ics'
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 3000)
     }
     setCalStatus('done')
     setTimeout(() => setCalStatus('idle'), 2500)
