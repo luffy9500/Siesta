@@ -1,5 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useCallback } from 'react'
+import { isAfter, parseISO, startOfDay, format } from 'date-fns'
+import { it } from 'date-fns/locale'
 import { useSettings } from '../hooks/useSettings'
+import { useSaldi } from '../hooks/useSaldi'
+import { useAssenze } from '../hooks/useAssenze'
+import { TIPO_LABELS } from '../types'
+import type { AbsenceType } from '../types'
 
 const GIORNI = [
   { value: 1, label: 'Lunedì' },
@@ -11,16 +17,16 @@ const GIORNI = [
   { value: 0, label: 'Domenica' },
 ]
 
+const TIPI: AbsenceType[] = ['ferie', 'permessi', 'rol', 'malattia']
+
 export default function ImpostazioniPage() {
   const { settings, save } = useSettings()
+  const { getLatest } = useSaldi()
+  const { assenze } = useAssenze()
   const [ore, setOre] = useState(settings.ore_giornaliere)
   const [giorni, setGiorni] = useState<number[]>(settings.giorni_lavorativi)
   const [saved, setSaved] = useState(false)
-
-  useEffect(() => {
-    setOre(settings.ore_giornaliere)
-    setGiorni(settings.giorni_lavorativi)
-  }, [settings.ore_giornaliere, settings.giorni_lavorativi])
+  const [exportStatus, setExportStatus] = useState<'idle' | 'copied' | 'shared'>('idle')
 
   const toggleGiorno = (v: number) => {
     setGiorni(prev => prev.includes(v) ? prev.filter(g => g !== v) : [...prev, v])
@@ -30,6 +36,80 @@ export default function ImpostazioniPage() {
     save({ ore_giornaliere: ore, giorni_lavorativi: giorni })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  const buildExportText = useCallback(() => {
+    const today = startOfDay(new Date())
+    const dateLabel = format(today, "d MMMM yyyy", { locale: it })
+
+    const lines: string[] = [
+      '🌴 Siesta — Riepilogo ferie',
+      `Generato il ${dateLabel}`,
+      '',
+      '📊 SALDI',
+    ]
+
+    TIPI.forEach(tipo => {
+      const latest = getLatest(tipo)
+      if (!latest) { lines.push(`${TIPO_LABELS[tipo]}: nessun saldo inserito`); return }
+      const salMese = new Date(latest.anno, latest.mese - 1, 1)
+      const usate = assenze
+        .filter(a => a.tipo === tipo && !isAfter(parseISO(a.data_fine), today) && !isAfter(salMese, parseISO(a.data_inizio)))
+        .reduce((s, a) => s + a.ore, 0)
+      const pianificate = assenze
+        .filter(a => a.tipo === tipo && isAfter(parseISO(a.data_inizio), today))
+        .reduce((s, a) => s + a.ore, 0)
+      const disponibili = Math.max(0, latest.ore - usate - pianificate)
+      lines.push(
+        `${TIPO_LABELS[tipo]}: ${latest.ore}h busta | ${usate}h usate | ${pianificate}h pian. | ${disponibili}h disp.`
+      )
+    })
+
+    const future = assenze
+      .filter(a => isAfter(parseISO(a.data_inizio), today))
+      .sort((a, b) => a.data_inizio.localeCompare(b.data_inizio))
+
+    const past = assenze
+      .filter(a => !isAfter(parseISO(a.data_fine), today))
+      .sort((a, b) => b.data_inizio.localeCompare(a.data_inizio))
+      .slice(0, 10)
+
+    if (future.length > 0) {
+      lines.push('', '📅 ASSENZE PIANIFICATE')
+      future.forEach(a => {
+        const da = format(parseISO(a.data_inizio), 'd MMM', { locale: it })
+        const al = format(parseISO(a.data_fine), 'd MMM yyyy', { locale: it })
+        lines.push(`• ${TIPO_LABELS[a.tipo]}: ${da} → ${al} (${a.ore}h)${a.note ? ' — ' + a.note : ''}`)
+      })
+    }
+
+    if (past.length > 0) {
+      lines.push('', '🗂 ULTIME ASSENZE USATE')
+      past.forEach(a => {
+        const da = format(parseISO(a.data_inizio), 'd MMM', { locale: it })
+        const al = format(parseISO(a.data_fine), 'd MMM yyyy', { locale: it })
+        lines.push(`• ${TIPO_LABELS[a.tipo]}: ${da} → ${al} (${a.ore}h)${a.note ? ' — ' + a.note : ''}`)
+      })
+    }
+
+    return lines.join('\n')
+  }, [assenze, getLatest])
+
+  const handleExport = async () => {
+    const text = buildExportText()
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Siesta – Riepilogo ferie', text })
+        setExportStatus('shared')
+        setTimeout(() => setExportStatus('idle'), 2500)
+      } catch {
+        // user cancelled share sheet — no action needed
+      }
+    } else {
+      await navigator.clipboard.writeText(text)
+      setExportStatus('copied')
+      setTimeout(() => setExportStatus('idle'), 2500)
+    }
   }
 
   return (
@@ -48,7 +128,7 @@ export default function ImpostazioniPage() {
               step="0.5"
               value={ore}
               onChange={e => setOre(parseFloat(e.target.value))}
-              className="w-24 border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-24 border border-gray-300 rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
             <span className="text-sm text-gray-500">ore / giorno</span>
           </div>
@@ -70,6 +150,21 @@ export default function ImpostazioniPage() {
               </label>
             ))}
           </div>
+        </div>
+
+        {/* Export */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-4">
+          <p className="text-sm font-bold text-gray-700 mb-1">Esporta riepilogo</p>
+          <p className="text-xs text-gray-500 mb-3">
+            Genera un riepilogo di saldi e assenze da condividere o copiare
+          </p>
+          <button
+            type="button"
+            onClick={handleExport}
+            className="w-full py-2.5 bg-teal-50 text-teal-700 border border-teal-200 rounded-xl font-semibold text-sm transition hover:bg-teal-100"
+          >
+            {exportStatus === 'copied' ? '✓ Copiato!' : exportStatus === 'shared' ? '✓ Condiviso!' : '📤 Condividi riepilogo'}
+          </button>
         </div>
 
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
