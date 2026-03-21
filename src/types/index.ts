@@ -5,6 +5,8 @@ export interface UserSettings {
   user_id: string
   ore_giornaliere: number
   giorni_lavorativi: number[] // 0=Dom, 1=Lun, ..., 6=Sab
+  soglia_saldo_basso: number  // ore sotto cui mostrare avviso (0 = disabilitato)
+  tipo_labels: Record<AbsenceType, string> // etichette personalizzate per i tipi
   created_at: string
   updated_at: string
 }
