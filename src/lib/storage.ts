@@ -30,12 +30,33 @@ const DEFAULT_SETTINGS: UserSettings = {
   user_id: 'local',
   ore_giornaliere: 8,
   giorni_lavorativi: [1, 2, 3, 4, 5],
+  soglia_saldo_basso: 8,
+  tipo_labels: { ferie: 'Ferie', permessi: 'Permessi', rol: 'ROL', malattia: 'Malattia' },
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 }
 
 export function loadSettings(): UserSettings {
-  return load(KEYS.settings, DEFAULT_SETTINGS)
+  const stored = load<Partial<UserSettings>>(KEYS.settings, {})
+  return { ...DEFAULT_SETTINGS, ...stored }
+}
+
+export function exportAllData(): string {
+  return JSON.stringify({
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    settings: loadSettings(),
+    saldi: loadSaldi(),
+    assenze: loadAssenze(),
+  }, null, 2)
+}
+
+export function importAllData(json: string): void {
+  const data = JSON.parse(json)
+  if (!data || data.version !== 1) throw new Error('Formato non valido')
+  if (data.settings) save(KEYS.settings, data.settings)
+  if (Array.isArray(data.saldi)) save(KEYS.saldi, data.saldi)
+  if (Array.isArray(data.assenze)) save(KEYS.assenze, data.assenze)
 }
 
 export function saveSettings(values: Partial<UserSettings>): UserSettings {

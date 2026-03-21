@@ -44,12 +44,12 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
         <div>
-          <h2 className="text-lg font-bold text-gray-800">Saldo attuale</h2>
-          <p className="text-xs text-gray-400 capitalize">{dateLabel}</p>
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Saldo attuale</h2>
+          <p className="text-xs text-gray-400 dark:text-gray-500 capitalize">{dateLabel}</p>
         </div>
         <button
           onClick={() => navigate('/saldi')}
-          className="text-xs text-teal-700 border border-teal-500 rounded-full px-3 py-1.5 font-medium hover:bg-teal-50 transition"
+          className="text-xs text-teal-700 dark:text-teal-400 border border-teal-500 dark:border-teal-600 rounded-full px-3 py-1.5 font-medium hover:bg-teal-50 dark:hover:bg-teal-900/30 transition"
         >
           Aggiorna busta
         </button>
