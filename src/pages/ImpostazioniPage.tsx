@@ -6,6 +6,7 @@ import { useSaldi } from '../hooks/useSaldi'
 import { useAssenze } from '../hooks/useAssenze'
 import { TIPO_LABELS } from '../types'
 import type { AbsenceType } from '../types'
+import { generateICS } from '../lib/ics'
 
 const GIORNI = [
   { value: 1, label: 'Lunedì' },
@@ -27,6 +28,7 @@ export default function ImpostazioniPage() {
   const [giorni, setGiorni] = useState<number[]>(settings.giorni_lavorativi)
   const [saved, setSaved] = useState(false)
   const [exportStatus, setExportStatus] = useState<'idle' | 'copied' | 'shared'>('idle')
+  const [calStatus, setCalStatus] = useState<'idle' | 'done'>('idle')
 
   const toggleGiorno = (v: number) => {
     setGiorni(prev => prev.includes(v) ? prev.filter(g => g !== v) : [...prev, v])
@@ -95,6 +97,24 @@ export default function ImpostazioniPage() {
     return lines.join('\n')
   }, [assenze, getLatest])
 
+  const handleExportCal = async () => {
+    const icsContent = generateICS(assenze)
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' })
+    const file = new File([blob], 'siesta-assenze.ics', { type: 'text/calendar' })
+    if (navigator.share && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'Siesta – Assenze' })
+      } catch { /* utente ha annullato */ }
+    } else {
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url; a.download = 'siesta-assenze.ics'; a.click()
+      URL.revokeObjectURL(url)
+    }
+    setCalStatus('done')
+    setTimeout(() => setCalStatus('idle'), 2500)
+  }
+
   const handleExport = async () => {
     const text = buildExportText()
     if (navigator.share) {
@@ -152,7 +172,7 @@ export default function ImpostazioniPage() {
           </div>
         </div>
 
-        {/* Export */}
+        {/* Export testo */}
         <div className="bg-white rounded-2xl border border-gray-200 p-4">
           <p className="text-sm font-bold text-gray-700 mb-1">Esporta riepilogo</p>
           <p className="text-xs text-gray-500 mb-3">
@@ -165,6 +185,25 @@ export default function ImpostazioniPage() {
           >
             {exportStatus === 'copied' ? '✓ Copiato!' : exportStatus === 'shared' ? '✓ Condiviso!' : '📤 Condividi riepilogo'}
           </button>
+        </div>
+
+        {/* Export calendario ICS */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-4">
+          <p className="text-sm font-bold text-gray-700 mb-1">Aggiungi al Calendario</p>
+          <p className="text-xs text-gray-500 mb-3">
+            Esporta tutte le assenze in formato .ics — compatibile con Apple Calendar e Google Calendar
+          </p>
+          <button
+            type="button"
+            onClick={handleExportCal}
+            disabled={assenze.length === 0}
+            className="w-full py-2.5 bg-sky-50 text-sky-700 border border-sky-200 rounded-xl font-semibold text-sm transition hover:bg-sky-100 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {calStatus === 'done' ? '✓ Esportato!' : '📅 Apri in Calendario'}
+          </button>
+          {assenze.length === 0 && (
+            <p className="text-xs text-gray-400 mt-2 text-center">Nessuna assenza da esportare</p>
+          )}
         </div>
 
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
