@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { SettingsProvider } from './contexts/SettingsContext'
 import Layout from './components/Layout'
 import DashboardPage from './pages/DashboardPage'
 import CalendarioPage from './pages/CalendarioPage'
@@ -26,7 +27,6 @@ function DarkModeManager() {
     } else if (settings.tema === 'chiaro') {
       applyDark(false)
     } else {
-      // auto: segue il sistema
       mql = window.matchMedia('(prefers-color-scheme: dark)')
       applyDark(mql.matches)
       listener = (e) => applyDark(e.matches)
@@ -43,19 +43,21 @@ function DarkModeManager() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <DarkModeManager />
-      <Layout>
-        <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/calendario" element={<CalendarioPage />} />
-          <Route path="/aggiungi" element={<AggiungiPage />} />
-          <Route path="/saldi" element={<SaldiPage />} />
-          <Route path="/statistiche" element={<StatistichePage />} />
-          <Route path="/impostazioni" element={<ImpostazioniPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
-    </BrowserRouter>
+    <SettingsProvider>
+      <BrowserRouter>
+        <DarkModeManager />
+        <Layout>
+          <Routes>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/calendario" element={<CalendarioPage />} />
+            <Route path="/aggiungi" element={<AggiungiPage />} />
+            <Route path="/saldi" element={<SaldiPage />} />
+            <Route path="/statistiche" element={<StatistichePage />} />
+            <Route path="/impostazioni" element={<ImpostazioniPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Layout>
+      </BrowserRouter>
+    </SettingsProvider>
   )
 }
