@@ -14,7 +14,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col max-w-lg mx-auto">
       <header className="bg-teal-600 text-white px-4 pb-2.5 shadow-md sticky top-0 z-10 pt-safe-top">
         <div className="flex items-center gap-1.5">
-          <span className="text-xl leading-none">🌴</span>
+          <img src="/favicon.svg" alt="Siesta" className="h-6 w-6 rounded-md" />
           <span className="text-base font-bold tracking-tight">Siesta</span>
         </div>
       </header>
