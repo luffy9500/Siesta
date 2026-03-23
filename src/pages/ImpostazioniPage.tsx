@@ -200,7 +200,7 @@ export default function ImpostazioniPage() {
               <button
                 key={t.value}
                 type="button"
-                onClick={() => setTema(t.value)}
+                onClick={() => { setTema(t.value); save({ tema: t.value }) }}
                 className={`flex-1 py-1.5 rounded-lg text-sm font-semibold border-2 transition ${
                   tema === t.value
                     ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300'
