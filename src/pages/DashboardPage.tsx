@@ -40,16 +40,15 @@ export default function DashboardPage() {
   const dateLabel = format(today, "EEEE d MMMM", { locale: it })
 
   return (
-    <div className="p-4 space-y-3">
-      {/* Header */}
+    <div className="p-3 space-y-2">
       <div className="flex items-center justify-between mb-1">
         <div>
-          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Saldo attuale</h2>
+          <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">Saldo attuale</h2>
           <p className="text-xs text-gray-400 dark:text-gray-500 capitalize">{dateLabel}</p>
         </div>
         <button
           onClick={() => navigate('/saldi')}
-          className="text-xs text-teal-700 dark:text-teal-400 border border-teal-500 dark:border-teal-600 rounded-full px-3 py-1.5 font-medium hover:bg-teal-50 dark:hover:bg-teal-900/30 transition"
+          className="text-xs text-teal-700 dark:text-teal-400 border border-teal-500 dark:border-teal-600 rounded-full px-2.5 py-1 font-medium hover:bg-teal-50 dark:hover:bg-teal-900/30 transition"
         >
           Aggiorna busta
         </button>
@@ -61,7 +60,7 @@ export default function DashboardPage() {
 
       <button
         onClick={() => navigate('/aggiungi')}
-        className="w-full mt-2 bg-teal-600 active:bg-teal-800 text-white font-semibold py-3.5 rounded-2xl transition shadow-md text-sm tracking-wide"
+        className="w-full mt-1 bg-teal-600 active:bg-teal-800 text-white font-semibold py-2.5 rounded-xl transition shadow-md text-sm"
       >
         + Aggiungi assenza
       </button>

@@ -30,7 +30,6 @@ export default function AggiungiPage() {
   const [showOrePicker, setShowOrePicker] = useState(false)
   const [oreInputTemp, setOreInputTemp] = useState('')
 
-  // When editAssenza loads (async nav), sync state
   useEffect(() => {
     if (editAssenza) {
       setTipo(editAssenza.tipo)
@@ -52,9 +51,7 @@ export default function AggiungiPage() {
       const days = eachDayOfInterval({ start, end })
       const lavorativi = days.filter(d => settings.giorni_lavorativi.includes(getDay(d)))
       return lavorativi.length * settings.ore_giornaliere
-    } catch {
-      return 0
-    }
+    } catch { return 0 }
   }, [dataInizio, dataFine, settings])
 
   const oreTotali = oreCustom !== '' ? parseFloat(oreCustom) : oreCalcolate
@@ -71,10 +68,7 @@ export default function AggiungiPage() {
     navigate(-1)
   }
 
-  const handlePickOre = (h: number) => {
-    setOreCustom(String(h))
-    setShowOrePicker(false)
-  }
+  const handlePickOre = (h: number) => { setOreCustom(String(h)); setShowOrePicker(false) }
 
   const handleConfirmCustomOre = () => {
     const v = parseFloat(oreInputTemp)
@@ -85,27 +79,23 @@ export default function AggiungiPage() {
   const oreLabel = oreCustom !== '' ? `${oreCustom}h` : `${oreCalcolate}h (auto)`
 
   return (
-    <div className="p-4">
-      <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">
+    <div className="p-3">
+      <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 mb-3">
         {editId ? 'Modifica assenza' : 'Aggiungi assenza'}
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3">
         {/* Tipo */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipo</label>
-          <div className="grid grid-cols-2 gap-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Tipo</label>
+          <div className="grid grid-cols-2 gap-1.5">
             {TIPI.map(t => {
               const c = TIPO_COLORS[t]
               return (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setTipo(t)}
-                  className={`py-2.5 rounded-xl border-2 text-sm font-semibold transition
-                    ${tipo === t ? `${c.border} ${c.bg} ${c.text}` : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:bg-gray-800'}
-                  `}
-                >
+                <button key={t} type="button" onClick={() => setTipo(t)}
+                  className={`py-2 rounded-lg border-2 text-sm font-semibold transition
+                    ${tipo === t ? `${c.border} ${c.bg} ${c.text}` : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 dark:bg-gray-800'}
+                  `}>
                   {tipoLabel(t)}
                 </button>
               )
@@ -114,25 +104,20 @@ export default function AggiungiPage() {
         </div>
 
         {/* Dal / Al */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           {([
             { label: 'Dal', value: dataInizio, onChange: (v: string) => { setDataInizio(v); if (v > dataFine) setDataFine(v) }, min: undefined },
-            { label: 'Al',  value: dataFine,   onChange: (v: string) => setDataFine(v),                                         min: dataInizio },
+            { label: 'Al',  value: dataFine,   onChange: (v: string) => setDataFine(v), min: dataInizio },
           ] as const).map(({ label, value, onChange, min }) => (
-            <div key={label} className="relative">
+            <div key={label}>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
-              <div className="relative border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 overflow-hidden">
-                <div className="px-3 py-2.5 text-base text-gray-800 dark:text-gray-100 pointer-events-none">
+              <div className="relative border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 overflow-hidden">
+                <div className="px-3 py-2 text-sm text-gray-800 dark:text-gray-100 pointer-events-none">
                   {format(parseISO(value), 'd MMM yyyy')}
                 </div>
-                <input
-                  type="date"
-                  required
-                  value={value}
-                  min={min}
+                <input type="date" required value={value} min={min}
                   onChange={e => onChange(e.target.value)}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
               </div>
             </div>
           ))}
@@ -141,11 +126,8 @@ export default function AggiungiPage() {
         {/* Ore */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ore</label>
-          <button
-            type="button"
-            onClick={() => { setOreInputTemp(''); setShowOrePicker(true) }}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 text-base text-left bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 flex items-center justify-between"
-          >
+          <button type="button" onClick={() => { setOreInputTemp(''); setShowOrePicker(true) }}
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-left bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 flex items-center justify-between">
             <span className={oreCustom !== '' ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}>{oreLabel}</span>
             <span className="text-gray-400 text-sm">›</span>
           </button>
@@ -154,17 +136,13 @@ export default function AggiungiPage() {
         {/* Note */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Note (opzionale)</label>
-          <input
-            type="text"
-            placeholder="es. Visita medica"
-            value={note}
+          <input type="text" placeholder="es. Visita medica" value={note}
             onChange={e => setNote(e.target.value)}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
-          />
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100" />
         </div>
 
         {/* Riepilogo */}
-        <div className={`rounded-xl p-3 ${TIPO_COLORS[tipo].bg} ${TIPO_COLORS[tipo].text}`}>
+        <div className={`rounded-lg p-2.5 ${TIPO_COLORS[tipo].bg} ${TIPO_COLORS[tipo].text}`}>
           <p className="text-sm font-medium">
             {tipoLabel(tipo)}: <strong>{oreTotali}h</strong>
             {oreTotali > 0 && ` — ${(oreTotali / settings.ore_giornaliere).toFixed(1)} giornate`}
@@ -173,81 +151,51 @@ export default function AggiungiPage() {
 
         {error && <p className="text-red-600 text-sm bg-red-50 rounded-lg p-2">{error}</p>}
 
-        <button
-          type="submit"
-          className="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold py-3.5 rounded-2xl transition shadow-md"
-        >
+        <button type="submit"
+          className="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold py-2.5 rounded-xl transition shadow-md text-sm">
           {editId ? 'Salva modifiche' : 'Salva assenza'}
         </button>
 
         {editId && (
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="w-full py-3 text-gray-500 dark:text-gray-400 text-sm font-medium"
-          >
+          <button type="button" onClick={() => navigate(-1)}
+            className="w-full py-2 text-gray-500 dark:text-gray-400 text-sm font-medium">
             Annulla
           </button>
         )}
       </form>
 
-      {/* Ore picker bottom sheet */}
+      {/* Ore picker */}
       {showOrePicker && (
-        <div
-          className="fixed inset-0 bg-black/40 flex items-end justify-center z-50"
-          onClick={() => setShowOrePicker(false)}
-        >
-          <div
-            className="bg-white dark:bg-gray-800 rounded-t-3xl w-full max-w-lg p-6 space-y-4"
-            onClick={e => e.stopPropagation()}
-          >
-            <h3 className="text-base font-bold text-gray-800 dark:text-gray-100">Seleziona ore</h3>
+        <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50" onClick={() => setShowOrePicker(false)}>
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl w-full max-w-lg p-4 space-y-3" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100">Seleziona ore</h3>
 
-            <div className="grid grid-cols-4 gap-2">
-              <button
-                type="button"
-                onClick={() => { setOreCustom(''); setShowOrePicker(false) }}
-                className="py-3 rounded-xl bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 font-semibold text-sm border-2 border-teal-200 dark:border-teal-700"
-              >
+            <div className="grid grid-cols-5 gap-1.5">
+              <button type="button" onClick={() => { setOreCustom(''); setShowOrePicker(false) }}
+                className="py-2 rounded-lg bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 font-semibold text-sm border-2 border-teal-200 dark:border-teal-700 col-span-1">
                 {oreCalcolate}h
-                <div className="text-xs font-normal text-teal-500">auto</div>
+                <div className="text-[10px] font-normal text-teal-500">auto</div>
               </button>
               {QUICK_HOURS.map(h => (
-                <button
-                  key={h}
-                  type="button"
-                  onClick={() => handlePickOre(h)}
-                  className="py-3 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold text-sm border-2 border-gray-200 dark:border-gray-600 hover:border-teal-300"
-                >
+                <button key={h} type="button" onClick={() => handlePickOre(h)}
+                  className="py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold text-sm border-2 border-gray-200 dark:border-gray-600 hover:border-teal-300">
                   {h}h
                 </button>
               ))}
             </div>
 
             <div className="flex gap-2">
-              <input
-                type="number"
-                min="0.5"
-                step="0.5"
-                placeholder="Ore personalizzate"
-                value={oreInputTemp}
+              <input type="number" min="0.5" step="0.5" placeholder="Ore personalizzate" value={oreInputTemp}
                 onChange={e => setOreInputTemp(e.target.value)}
-                className="flex-1 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
-              />
-              <button
-                type="button"
-                onClick={handleConfirmCustomOre}
-                className="px-4 py-2.5 bg-teal-600 text-white rounded-xl font-semibold text-sm"
-              >
+                className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100" />
+              <button type="button" onClick={handleConfirmCustomOre}
+                className="px-4 py-2 bg-teal-600 text-white rounded-lg font-semibold text-sm">
                 OK
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowOrePicker(false)}
-              className="w-full py-2.5 text-gray-500 dark:text-gray-400 text-sm"
-            >
+            <button type="button" onClick={() => setShowOrePicker(false)}
+              className="w-full py-2 text-gray-500 dark:text-gray-400 text-sm">
               Annulla
             </button>
           </div>

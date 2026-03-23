@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import DashboardPage from './pages/DashboardPage'
@@ -6,10 +7,44 @@ import AggiungiPage from './pages/AggiungiPage'
 import SaldiPage from './pages/SaldiPage'
 import ImpostazioniPage from './pages/ImpostazioniPage'
 import StatistichePage from './pages/StatistichePage'
+import { useSettings } from './hooks/useSettings'
+
+function DarkModeManager() {
+  const { settings } = useSettings()
+
+  useEffect(() => {
+    const html = document.documentElement
+    let mql: MediaQueryList | null = null
+    let listener: ((e: MediaQueryListEvent) => void) | null = null
+
+    const applyDark = (dark: boolean) => {
+      html.classList.toggle('dark', dark)
+    }
+
+    if (settings.tema === 'scuro') {
+      applyDark(true)
+    } else if (settings.tema === 'chiaro') {
+      applyDark(false)
+    } else {
+      // auto: segue il sistema
+      mql = window.matchMedia('(prefers-color-scheme: dark)')
+      applyDark(mql.matches)
+      listener = (e) => applyDark(e.matches)
+      mql.addEventListener('change', listener)
+    }
+
+    return () => {
+      if (mql && listener) mql.removeEventListener('change', listener)
+    }
+  }, [settings.tema])
+
+  return null
+}
 
 export default function App() {
   return (
     <BrowserRouter>
+      <DarkModeManager />
       <Layout>
         <Routes>
           <Route path="/" element={<DashboardPage />} />
