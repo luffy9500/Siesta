@@ -33,9 +33,7 @@ export default function CalendarioPage() {
   const tipoLabel = (t: AbsenceType) => settings.tipo_labels[t] ?? TIPO_LABELS[t]
 
   const toggleFiltro = (tipo: AbsenceType) => {
-    setFiltriAttivi(prev =>
-      prev.includes(tipo) ? prev.filter(t => t !== tipo) : [...prev, tipo]
-    )
+    setFiltriAttivi(prev => prev.includes(tipo) ? prev.filter(t => t !== tipo) : [...prev, tipo])
   }
 
   const assenzeFiltrate = useMemo(() =>
@@ -78,60 +76,52 @@ export default function CalendarioPage() {
     if (confirm(`Eliminare questa assenza di ${tipoLabel(assenza.tipo)}?`)) {
       remove(id)
       const newList = selectedDay.list.filter(a => a.id !== id)
-      if (newList.length === 0) {
-        setSelectedDay(null)
-      } else {
-        setSelectedDay({ ...selectedDay, list: newList })
-      }
+      if (newList.length === 0) setSelectedDay(null)
+      else setSelectedDay({ ...selectedDay, list: newList })
     }
   }
 
   return (
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={() => setCurrent(subMonths(current, 1))} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-xl text-gray-700 dark:text-gray-200">‹</button>
-        <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 capitalize">
+    <div className="p-3">
+      <div className="flex items-center justify-between mb-3">
+        <button onClick={() => setCurrent(subMonths(current, 1))} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-xl text-gray-700 dark:text-gray-200">‹</button>
+        <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 capitalize">
           {format(current, 'MMMM yyyy', { locale: it })}
         </h2>
-        <button onClick={() => setCurrent(addMonths(current, 1))} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-xl text-gray-700 dark:text-gray-200">›</button>
+        <button onClick={() => setCurrent(addMonths(current, 1))} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-xl text-gray-700 dark:text-gray-200">›</button>
       </div>
 
       {/* Legenda / filtri */}
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div className="flex flex-wrap gap-1.5 mb-2">
         {TIPI.map(t => {
           const attivo = filtriAttivi.includes(t)
           const isFiltrato = filtriAttivi.length > 0 && !attivo
           return (
-            <button
-              key={t}
-              onClick={() => toggleFiltro(t)}
+            <button key={t} onClick={() => toggleFiltro(t)}
               className={`text-xs px-2 py-0.5 rounded-full transition border ${
                 isFiltrato
                   ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-600'
                   : `${TIPO_COLORS[t].bg} ${TIPO_COLORS[t].text} border-transparent`
-              } ${attivo ? 'ring-2 ring-offset-1 ' + TIPO_COLORS[t].border : ''}`}
-            >
+              } ${attivo ? 'ring-2 ring-offset-1 ' + TIPO_COLORS[t].border : ''}`}>
               {tipoLabel(t)}
             </button>
           )
         })}
         {filtriAttivi.length > 0 && (
-          <button
-            onClick={() => setFiltriAttivi([])}
-            className="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
-          >
+          <button onClick={() => setFiltriAttivi([])}
+            className="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300">
             × Tutti
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-7 gap-1 mb-1">
+      <div className="grid grid-cols-7 gap-0.5 mb-0.5">
         {DAY_HEADERS.map(d => (
           <div key={d} className="text-center text-xs font-semibold text-gray-400 dark:text-gray-500">{d}</div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0.5">
         {days.map((day, i) => {
           if (!day) return <div key={`empty-${i}`} />
           const key = format(day, 'yyyy-MM-dd')
@@ -139,20 +129,14 @@ export default function CalendarioPage() {
           const inMonth = isSameMonth(day, current)
 
           return (
-            <button
-              key={key}
-              onClick={() => handleDayClick(day)}
-              className={`aspect-square rounded-xl flex flex-col items-center justify-center text-xs relative overflow-hidden
+            <button key={key} onClick={() => handleDayClick(day)}
+              className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs relative overflow-hidden cursor-pointer hover:opacity-80 transition-opacity
                 ${inMonth ? 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100' : 'bg-gray-50 dark:bg-gray-700/40 text-gray-300 dark:text-gray-600'}
                 ${isToday(day) ? 'ring-2 ring-teal-500' : ''}
-                cursor-pointer hover:opacity-80 transition-opacity
-              `}
-            >
+              `}>
               {dayAssenze.length > 0 && (
                 <div className="absolute inset-0 flex">
-                  {dayAssenze.map((a, ai) => (
-                    <div key={ai} className={`flex-1 ${TIPO_COLORS[a.tipo].cal}`} />
-                  ))}
+                  {dayAssenze.map((a, ai) => <div key={ai} className={`flex-1 ${TIPO_COLORS[a.tipo].cal}`} />)}
                 </div>
               )}
               <span className={`relative z-10 font-semibold ${dayAssenze.length > 0 ? TIPO_COLORS[dayAssenze[0].tipo].text : ''}`}>
@@ -168,62 +152,52 @@ export default function CalendarioPage() {
         })}
       </div>
 
-      {/* Bottom sheet: lista assenze del giorno selezionato */}
+      {/* Bottom sheet */}
       {selectedDay && (
         <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50" onClick={() => setSelectedDay(null)}>
-          <div className="bg-white dark:bg-gray-800 rounded-t-3xl w-full max-w-lg p-6" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl w-full max-w-lg p-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-bold text-gray-700 dark:text-gray-200">
                 {format(parseISO(selectedDay.date), 'd MMMM yyyy', { locale: it })}
               </p>
-              <button
-                onClick={() => navigate(`/aggiungi?data=${selectedDay.date}`)}
-                className="text-xs text-teal-600 dark:text-teal-400 font-semibold border border-teal-300 dark:border-teal-600 rounded-full px-2.5 py-1"
-              >
+              <button onClick={() => navigate(`/aggiungi?data=${selectedDay.date}`)}
+                className="text-xs text-teal-600 dark:text-teal-400 font-semibold border border-teal-300 dark:border-teal-600 rounded-full px-2 py-0.5">
                 + Aggiungi
               </button>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {selectedDay.list.map(assenza => (
-                <div key={assenza.id} className="rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-                  <div className={`h-1 ${TIPO_COLORS[assenza.tipo].accent}`} />
-                  <div className="px-4 py-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${TIPO_COLORS[assenza.tipo].bg} ${TIPO_COLORS[assenza.tipo].text}`}>
+                <div key={assenza.id} className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+                  <div className={`h-0.5 ${TIPO_COLORS[assenza.tipo].accent}`} />
+                  <div className="px-3 py-2.5">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${TIPO_COLORS[assenza.tipo].bg} ${TIPO_COLORS[assenza.tipo].text}`}>
                         {tipoLabel(assenza.tipo)}
                       </span>
                     </div>
-                    <div className="space-y-1 text-sm text-gray-700 dark:text-gray-300 mb-3">
+                    <div className="space-y-0.5 text-xs text-gray-700 dark:text-gray-300 mb-2">
                       <div className="flex justify-between">
-                        <span>Dal</span>
-                        <span className="font-medium">{format(parseISO(assenza.data_inizio), 'd MMM yyyy', { locale: it })}</span>
+                        <span>Dal</span><span className="font-medium">{format(parseISO(assenza.data_inizio), 'd MMM yyyy', { locale: it })}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Al</span>
-                        <span className="font-medium">{format(parseISO(assenza.data_fine), 'd MMM yyyy', { locale: it })}</span>
+                        <span>Al</span><span className="font-medium">{format(parseISO(assenza.data_fine), 'd MMM yyyy', { locale: it })}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Ore</span>
-                        <span className="font-medium">{assenza.ore}h</span>
+                        <span>Ore</span><span className="font-medium">{assenza.ore}h</span>
                       </div>
                       {assenza.note && (
                         <div className="flex justify-between">
-                          <span>Note</span>
-                          <span className="font-medium">{assenza.note}</span>
+                          <span>Note</span><span className="font-medium">{assenza.note}</span>
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => { setSelectedDay(null); navigate(`/aggiungi?edit=${assenza.id}`) }}
-                        className="flex-1 py-2 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 font-semibold rounded-xl text-sm hover:bg-teal-100 transition"
-                      >
+                    <div className="flex gap-1.5">
+                      <button onClick={() => { setSelectedDay(null); navigate(`/aggiungi?edit=${assenza.id}`) }}
+                        className="flex-1 py-1.5 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 font-semibold rounded-lg text-xs hover:bg-teal-100 transition">
                         ✏️ Modifica
                       </button>
-                      <button
-                        onClick={() => handleDelete(assenza.id)}
-                        className="flex-1 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-semibold rounded-xl text-sm hover:bg-red-100 transition"
-                      >
+                      <button onClick={() => handleDelete(assenza.id)}
+                        className="flex-1 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-semibold rounded-lg text-xs hover:bg-red-100 transition">
                         🗑 Elimina
                       </button>
                     </div>

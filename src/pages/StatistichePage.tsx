@@ -32,7 +32,6 @@ export default function StatistichePage() {
     [assenze, anno]
   )
 
-  // Monthly hours per tipo
   const monthlyData = useMemo(() => {
     const data = {} as Record<AbsenceType, number[]>
     TIPI.forEach(t => { data[t] = Array(12).fill(0) })
@@ -53,25 +52,20 @@ export default function StatistichePage() {
   )
 
   const maxOrePerMese = Math.max(...TIPI.flatMap(t => monthlyData[t]), 1)
-
   const tipiConDati = TIPI.filter(t => monthlyData[t].some(v => v > 0))
 
   return (
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Statistiche</h2>
-        {/* Anno selector */}
+    <div className="p-3">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">Statistiche</h2>
         <div className="flex items-center gap-1">
           {anni.map(a => (
-            <button
-              key={a}
-              onClick={() => setAnno(a)}
-              className={`px-3 py-1 rounded-full text-sm font-semibold transition ${
+            <button key={a} onClick={() => setAnno(a)}
+              className={`px-2.5 py-1 rounded-full text-xs font-semibold transition ${
                 a === anno
                   ? 'bg-teal-600 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
-            >
+              }`}>
               {a}
             </button>
           ))}
@@ -79,30 +73,30 @@ export default function StatistichePage() {
       </div>
 
       {assenzeAnno.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
-          <p className="text-4xl mb-3">📊</p>
+        <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+          <p className="text-3xl mb-2">📊</p>
           <p className="text-sm">Nessuna assenza nel {anno}</p>
         </div>
       ) : (
         <>
           {/* Totali annuali */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="grid grid-cols-2 gap-2 mb-3">
             {yearlyTotals.map(({ tipo, ore, giorni }) => {
               if (ore === 0) return null
               const c = TIPO_COLORS[tipo]
               const latest = getLatest(tipo)
               const pct = latest && latest.ore > 0 ? Math.min(100, Math.round((ore / latest.ore) * 100)) : null
               return (
-                <div key={tipo} className={`rounded-2xl p-3 ${c.bg} dark:bg-opacity-20 border ${c.border} dark:border-opacity-40`}>
-                  <p className={`text-xs font-bold mb-1 ${c.text}`}>{tipoLabel(tipo)}</p>
-                  <p className={`text-2xl font-black ${c.text}`}>{ore}h</p>
+                <div key={tipo} className={`rounded-xl p-2.5 ${c.bg} border ${c.border}`} style={{ opacity: 0.9 }}>
+                  <p className={`text-xs font-bold mb-0.5 ${c.text}`}>{tipoLabel(tipo)}</p>
+                  <p className={`text-xl font-black ${c.text}`}>{ore}h</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{giorni} giornate</p>
                   {pct !== null && (
-                    <div className="mt-2">
-                      <div className="h-1.5 bg-white/60 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div className="mt-1.5">
+                      <div className="h-1 bg-white/60 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div className={`h-full ${c.bar}`} style={{ width: `${pct}%` }} />
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{pct}% del saldo busta</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{pct}% del saldo busta</p>
                     </div>
                   )}
                 </div>
@@ -110,42 +104,31 @@ export default function StatistichePage() {
             })}
           </div>
 
-          {/* Grafico mensile per tipo */}
+          {/* Grafici mensili */}
           {tipiConDati.map(tipo => {
             const c = TIPO_COLORS[tipo]
-            const mesiConDati = monthlyData[tipo].some(v => v > 0)
-            if (!mesiConDati) return null
             return (
-              <div key={tipo} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4 mb-3">
-                <p className={`text-sm font-bold mb-3 ${c.text}`}>{tipoLabel(tipo)} — mensile</p>
-                <div className="flex items-end gap-1 h-20">
+              <div key={tipo} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-3 mb-2">
+                <p className={`text-xs font-bold mb-2 ${c.text}`}>{tipoLabel(tipo)} — mensile</p>
+                <div className="flex items-end gap-0.5 h-16">
                   {monthlyData[tipo].map((ore, mi) => {
                     const pct = ore > 0 ? Math.max(8, (ore / maxOrePerMese) * 100) : 0
                     return (
                       <div key={mi} className="flex-1 flex flex-col items-center gap-0.5">
-                        <div className="w-full flex items-end justify-center" style={{ height: '64px' }}>
+                        <div className="w-full flex items-end justify-center" style={{ height: '48px' }}>
                           {ore > 0 && (
-                            <div
-                              className={`w-full rounded-t-sm ${c.bar}`}
-                              style={{ height: `${pct}%` }}
-                              title={`${ore}h`}
-                            />
+                            <div className={`w-full rounded-t-sm ${c.bar}`} style={{ height: `${pct}%` }} title={`${ore}h`} />
                           )}
                         </div>
-                        <span className="text-[9px] text-gray-400 dark:text-gray-500 capitalize">
-                          {MESI_ABBR[mi]}
-                        </span>
+                        <span className="text-[8px] text-gray-400 dark:text-gray-500 capitalize">{MESI_ABBR[mi]}</span>
                       </div>
                     )
                   })}
                 </div>
-                {/* Legenda valori sopra le barre */}
-                <div className="flex gap-1 mt-2">
+                <div className="flex gap-0.5 mt-1">
                   {monthlyData[tipo].map((ore, mi) => (
                     <div key={mi} className="flex-1 text-center">
-                      {ore > 0 && (
-                        <span className={`text-[9px] font-semibold ${c.text}`}>{ore}h</span>
-                      )}
+                      {ore > 0 && <span className={`text-[8px] font-semibold ${c.text}`}>{ore}h</span>}
                     </div>
                   ))}
                 </div>
@@ -154,17 +137,17 @@ export default function StatistichePage() {
           })}
 
           {/* Tabella riepilogativa */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-4">
-            <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-3">Riepilogo {anno}</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-3">
+            <p className="text-xs font-bold text-gray-700 dark:text-gray-200 mb-2">Riepilogo {anno}</p>
             <div className="overflow-x-auto -mx-1">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="text-gray-400 dark:text-gray-500">
-                    <td className="pb-2 pr-2 font-semibold">Tipo</td>
+                    <td className="pb-1.5 pr-2 font-semibold">Tipo</td>
                     {MESI_ABBR.map((m, i) => (
-                      <td key={i} className="pb-2 text-center capitalize w-8">{m}</td>
+                      <td key={i} className="pb-1.5 text-center capitalize w-7">{m}</td>
                     ))}
-                    <td className="pb-2 text-right font-semibold pl-2">Tot.</td>
+                    <td className="pb-1.5 text-right font-semibold pl-1">Tot.</td>
                   </tr>
                 </thead>
                 <tbody>
@@ -173,13 +156,13 @@ export default function StatistichePage() {
                     const totale = monthlyData[tipo].reduce((s, v) => s + v, 0)
                     return (
                       <tr key={tipo} className="border-t border-gray-50 dark:border-gray-700">
-                        <td className={`py-2 pr-2 font-semibold ${c.text} whitespace-nowrap`}>{tipoLabel(tipo)}</td>
+                        <td className={`py-1.5 pr-2 font-semibold ${c.text} whitespace-nowrap`}>{tipoLabel(tipo)}</td>
                         {monthlyData[tipo].map((ore, mi) => (
-                          <td key={mi} className="py-2 text-center text-gray-500 dark:text-gray-400 w-8">
+                          <td key={mi} className="py-1.5 text-center text-gray-500 dark:text-gray-400 w-7">
                             {ore > 0 ? ore : '—'}
                           </td>
                         ))}
-                        <td className={`py-2 text-right font-bold ${c.text} pl-2`}>{totale}h</td>
+                        <td className={`py-1.5 text-right font-bold ${c.text} pl-1`}>{totale}h</td>
                       </tr>
                     )
                   })}

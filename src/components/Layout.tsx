@@ -12,10 +12,10 @@ const NAV = [
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col max-w-lg mx-auto">
-      <header className="bg-teal-600 text-white px-5 pb-3.5 shadow-md sticky top-0 z-10 pt-safe-top">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl leading-none">🌴</span>
-          <span className="text-lg font-bold tracking-tight">Siesta</span>
+      <header className="bg-teal-600 text-white px-4 pb-2.5 shadow-md sticky top-0 z-10 pt-safe-top">
+        <div className="flex items-center gap-1.5">
+          <span className="text-xl leading-none">🌴</span>
+          <span className="text-base font-bold tracking-tight">Siesta</span>
         </div>
       </header>
 
@@ -30,13 +30,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             to={to}
             end={to === '/'}
             className={({ isActive }) =>
-              `flex-1 flex flex-col items-center py-2 text-xs gap-0.5 transition ${
+              `flex-1 flex flex-col items-center py-1.5 text-xs gap-0.5 transition ${
                 isActive ? 'text-teal-600 font-semibold' : 'text-gray-400 dark:text-gray-500 hover:text-teal-500'
               }`
             }
           >
-            <span className="text-lg leading-none">{icon}</span>
-            <span>{label}</span>
+            <span className="text-base leading-none">{icon}</span>
+            <span className="text-[10px]">{label}</span>
           </NavLink>
         ))}
       </nav>
