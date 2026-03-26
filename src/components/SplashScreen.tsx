@@ -28,26 +28,17 @@ export default function SplashScreen({ onDone }: Props) {
 
       {/* Logo */}
       <div
-        className="transition-all duration-500"
-        style={{
-          transform: logoIn ? 'scale(1)' : 'scale(0.75)',
-          opacity: logoIn ? 1 : 0,
-        }}
+        className="transition-transform duration-500"
+        style={{ transform: logoIn ? 'scale(1)' : 'scale(0.85)' }}
       >
         <img src="/favicon.svg" alt="Siesta" className="w-20 h-20 drop-shadow-xl" />
       </div>
 
       {/* App name */}
-      <p
-        className="mt-5 text-2xl font-black tracking-tight text-gray-900 dark:text-white transition-all duration-500 delay-100"
-        style={{ opacity: logoIn ? 1 : 0, transform: logoIn ? 'translateY(0)' : 'translateY(6px)' }}
-      >
+      <p className="mt-5 text-2xl font-black tracking-tight text-gray-900 dark:text-white">
         Siesta
       </p>
-      <p
-        className="mt-1 text-sm text-gray-400 dark:text-gray-500 font-medium transition-all duration-500 delay-150"
-        style={{ opacity: logoIn ? 1 : 0, transform: logoIn ? 'translateY(0)' : 'translateY(6px)' }}
-      >
+      <p className="mt-1 text-sm text-gray-400 dark:text-gray-500 font-medium">
         Gestione ferie &amp; permessi
       </p>
 
