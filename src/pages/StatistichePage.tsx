@@ -20,6 +20,10 @@ export default function StatistichePage() {
   const [anno, setAnno] = useState(currentYear)
 
   const tipoLabel = (t: AbsenceType) => settings.tipo_labels[t] ?? TIPO_LABELS[t]
+  const unitaOf = (t: AbsenceType) => settings.unita_tipo[t] ?? 'ore'
+  const oreG = settings.ore_giornaliere
+  const fmtVal = (t: AbsenceType, ore: number) =>
+    unitaOf(t) === 'giorni' ? `${(ore / oreG).toFixed(1)}g` : `${ore}h`
 
   const anni = useMemo(() => {
     const set = new Set([currentYear])
@@ -89,8 +93,8 @@ export default function StatistichePage() {
               return (
                 <div key={tipo} className={`rounded-xl p-2.5 ${c.bg} border ${c.border}`} style={{ opacity: 0.9 }}>
                   <p className={`text-xs font-bold mb-0.5 ${c.text}`}>{tipoLabel(tipo)}</p>
-                  <p className={`text-xl font-black ${c.text}`}>{ore}h</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{giorni} giornate</p>
+                  <p className={`text-xl font-black ${c.text}`}>{fmtVal(tipo, ore)}</p>
+                  {unitaOf(tipo) === 'ore' && <p className="text-xs text-gray-500 dark:text-gray-400">{giorni} giornate</p>}
                   {pct !== null && (
                     <div className="mt-1.5">
                       <div className="h-1 bg-white/60 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -117,7 +121,7 @@ export default function StatistichePage() {
                       <div key={mi} className="flex-1 flex flex-col items-center gap-0.5">
                         <div className="w-full flex items-end justify-center" style={{ height: '48px' }}>
                           {ore > 0 && (
-                            <div className={`w-full rounded-t-sm ${c.bar}`} style={{ height: `${pct}%` }} title={`${ore}h`} />
+                            <div className={`w-full rounded-t-sm ${c.bar}`} style={{ height: `${pct}%` }} title={fmtVal(tipo, ore)} />
                           )}
                         </div>
                         <span className="text-[8px] text-gray-400 dark:text-gray-500 capitalize">{MESI_ABBR[mi]}</span>
@@ -128,7 +132,7 @@ export default function StatistichePage() {
                 <div className="flex gap-0.5 mt-1">
                   {monthlyData[tipo].map((ore, mi) => (
                     <div key={mi} className="flex-1 text-center">
-                      {ore > 0 && <span className={`text-[8px] font-semibold ${c.text}`}>{ore}h</span>}
+                      {ore > 0 && <span className={`text-[8px] font-semibold ${c.text}`}>{fmtVal(tipo, ore)}</span>}
                     </div>
                   ))}
                 </div>
@@ -159,10 +163,10 @@ export default function StatistichePage() {
                         <td className={`py-1.5 pr-2 font-semibold ${c.text} whitespace-nowrap`}>{tipoLabel(tipo)}</td>
                         {monthlyData[tipo].map((ore, mi) => (
                           <td key={mi} className="py-1.5 text-center text-gray-500 dark:text-gray-400 w-7">
-                            {ore > 0 ? ore : '—'}
+                            {ore > 0 ? fmtVal(tipo, ore) : '—'}
                           </td>
                         ))}
-                        <td className={`py-1.5 text-right font-bold ${c.text} pl-1`}>{totale}h</td>
+                        <td className={`py-1.5 text-right font-bold ${c.text} pl-1`}>{fmtVal(tipo, totale)}</td>
                       </tr>
                     )
                   })}

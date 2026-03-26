@@ -60,6 +60,7 @@ export default function ImpostazioniPage() {
   const [giorni, setGiorni] = useState<number[]>(settings.giorni_lavorativi)
   const [soglia, setSoglia] = useState(settings.soglia_saldo_basso)
   const [tipoLabels, setTipoLabels] = useState<Record<AbsenceType, string>>(settings.tipo_labels)
+  const [unitaTipo, setUnitaTipo] = useState<Record<AbsenceType, 'ore' | 'giorni'>>(settings.unita_tipo)
   const [tema, setTema] = useState<UserSettings['tema']>(settings.tema)
   const [saved, setSaved] = useState(false)
   const [exportStatus, setExportStatus] = useState<'idle' | 'copied' | 'shared'>('idle')
@@ -73,7 +74,7 @@ export default function ImpostazioniPage() {
   }
 
   const handleSave = () => {
-    save({ ore_giornaliere: ore, giorni_lavorativi: giorni, soglia_saldo_basso: soglia, tipo_labels: tipoLabels, tema })
+    save({ ore_giornaliere: ore, giorni_lavorativi: giorni, soglia_saldo_basso: soglia, tipo_labels: tipoLabels, unita_tipo: unitaTipo, tema })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -253,17 +254,33 @@ export default function ImpostazioniPage() {
           </div>
         </div>
 
-        {/* Etichette tipi */}
+        {/* Etichette tipi + unità */}
         <div className={card}>
-          <label className={label}>Nomi tipi assenza</label>
-          <p className={hint}>Personalizza le etichette dei tipi di assenza</p>
-          <div className="space-y-1.5">
+          <label className={label}>Tipi di assenza</label>
+          <p className={hint}>Personalizza etichetta e unità di misura (ore o giorni)</p>
+          <div className="space-y-2">
             {TIPI.map(tipo => (
               <div key={tipo} className="flex items-center gap-2">
                 <span className="text-xs text-gray-400 dark:text-gray-500 w-16 shrink-0">{TIPO_LABELS[tipo]}</span>
                 <input type="text" value={tipoLabels[tipo]}
                   onChange={e => setTipoLabels(prev => ({ ...prev, [tipo]: e.target.value }))}
-                  className={`flex-1 ${inputCls}`} />
+                  className={`flex-1 min-w-0 ${inputCls}`} />
+                <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 shrink-0">
+                  {(['ore', 'giorni'] as const).map(u => (
+                    <button
+                      key={u}
+                      type="button"
+                      onClick={() => setUnitaTipo(prev => ({ ...prev, [tipo]: u }))}
+                      className={`px-2 py-1 text-xs font-semibold transition ${
+                        unitaTipo[tipo] === u
+                          ? 'bg-teal-600 text-white'
+                          : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {u}
+                    </button>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
