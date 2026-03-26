@@ -8,6 +8,7 @@ import { TIPO_LABELS, TIPO_COLORS } from '../types'
 
 const TIPI: AbsenceType[] = ['ferie', 'permessi', 'rol', 'malattia']
 const QUICK_HOURS = [1, 2, 4, 8]
+const QUICK_DAYS  = [1, 2, 3, 5]
 
 export default function AggiungiPage() {
   const { assenze, add, update } = useAssenze()
@@ -24,24 +25,37 @@ export default function AggiungiPage() {
   const [tipo, setTipo] = useState<AbsenceType>(editAssenza?.tipo ?? 'ferie')
   const [dataInizio, setDataInizio] = useState(editAssenza?.data_inizio ?? defaultDate)
   const [dataFine, setDataFine] = useState(editAssenza?.data_fine ?? defaultDate)
-  const [oreCustom, setOreCustom] = useState(editAssenza ? String(editAssenza.ore) : '')
+  // valueInput stores the user-facing value in the configured unit (ore or giorni)
+  const [valueInput, setValueInput] = useState<string>(() => {
+    if (!editAssenza) return ''
+    const u = settings.unita_tipo[editAssenza.tipo] ?? 'ore'
+    return u === 'giorni'
+      ? String(editAssenza.ore / settings.ore_giornaliere)
+      : String(editAssenza.ore)
+  })
   const [note, setNote] = useState(editAssenza?.note ?? '')
   const [error, setError] = useState<string | null>(null)
-  const [showOrePicker, setShowOrePicker] = useState(false)
-  const [oreInputTemp, setOreInputTemp] = useState('')
+  const [showPicker, setShowPicker] = useState(false)
+  const [inputTemp, setInputTemp] = useState('')
 
   useEffect(() => {
     if (editAssenza) {
       setTipo(editAssenza.tipo)
       setDataInizio(editAssenza.data_inizio)
       setDataFine(editAssenza.data_fine)
-      setOreCustom(String(editAssenza.ore))
+      const u = settings.unita_tipo[editAssenza.tipo] ?? 'ore'
+      setValueInput(u === 'giorni'
+        ? String(editAssenza.ore / settings.ore_giornaliere)
+        : String(editAssenza.ore))
       setNote(editAssenza.note ?? '')
     }
   }, [editId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const tipoLabel = (t: AbsenceType) => settings.tipo_labels[t] ?? TIPO_LABELS[t]
+  const unita = settings.unita_tipo[tipo] ?? 'ore'
+  const oreG  = settings.ore_giornaliere
 
+  // always in hours
   const oreCalcolate = useMemo(() => {
     if (!dataInizio || !dataFine) return 0
     try {
@@ -50,16 +64,28 @@ export default function AggiungiPage() {
       if (differenceInCalendarDays(end, start) < 0) return 0
       const days = eachDayOfInterval({ start, end })
       const lavorativi = days.filter(d => settings.giorni_lavorativi.includes(getDay(d)))
-      return lavorativi.length * settings.ore_giornaliere
+      return lavorativi.length * oreG
     } catch { return 0 }
   }, [dataInizio, dataFine, settings])
 
-  const oreTotali = oreCustom !== '' ? parseFloat(oreCustom) : oreCalcolate
+  // auto value displayed in current unit
+  const autoLabel = unita === 'giorni'
+    ? `${oreCalcolate / oreG}g`
+    : `${oreCalcolate}h`
+
+  // total hours for saving
+  const oreTotali = valueInput !== ''
+    ? (unita === 'giorni' ? parseFloat(valueInput) * oreG : parseFloat(valueInput))
+    : oreCalcolate
+
+  const fieldLabel = valueInput !== ''
+    ? `${valueInput}${unita === 'giorni' ? 'g' : 'h'}`
+    : `${autoLabel} (auto)`
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    if (oreTotali <= 0) { setError('Le ore devono essere maggiori di 0'); return }
+    if (oreTotali <= 0) { setError('Il valore deve essere maggiore di 0'); return }
     if (editId) {
       update(editId, { tipo, data_inizio: dataInizio, data_fine: dataFine, ore: oreTotali, note: note || null })
     } else {
@@ -68,15 +94,15 @@ export default function AggiungiPage() {
     navigate(-1)
   }
 
-  const handlePickOre = (h: number) => { setOreCustom(String(h)); setShowOrePicker(false) }
+  const handlePickValue = (v: number) => { setValueInput(String(v)); setShowPicker(false) }
 
-  const handleConfirmCustomOre = () => {
-    const v = parseFloat(oreInputTemp)
-    if (!isNaN(v) && v > 0) setOreCustom(String(v))
-    setShowOrePicker(false)
+  const handleConfirmCustom = () => {
+    const v = parseFloat(inputTemp)
+    if (!isNaN(v) && v > 0) setValueInput(String(v))
+    setShowPicker(false)
   }
 
-  const oreLabel = oreCustom !== '' ? `${oreCustom}h` : `${oreCalcolate}h (auto)`
+  const quickValues = unita === 'giorni' ? QUICK_DAYS : QUICK_HOURS
 
   return (
     <div className="p-3">
@@ -92,7 +118,7 @@ export default function AggiungiPage() {
             {TIPI.map(t => {
               const c = TIPO_COLORS[t]
               return (
-                <button key={t} type="button" onClick={() => setTipo(t)}
+                <button key={t} type="button" onClick={() => { setTipo(t); setValueInput('') }}
                   className={`py-2 rounded-lg border-2 text-sm font-semibold transition
                     ${tipo === t ? `${c.border} ${c.bg} ${c.text}` : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 dark:bg-gray-800'}
                   `}>
@@ -123,12 +149,14 @@ export default function AggiungiPage() {
           ))}
         </div>
 
-        {/* Ore */}
+        {/* Ore / Giorni */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ore</label>
-          <button type="button" onClick={() => { setOreInputTemp(''); setShowOrePicker(true) }}
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {unita === 'giorni' ? 'Giorni' : 'Ore'}
+          </label>
+          <button type="button" onClick={() => { setInputTemp(''); setShowPicker(true) }}
             className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-left bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 flex items-center justify-between">
-            <span className={oreCustom !== '' ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}>{oreLabel}</span>
+            <span className={valueInput !== '' ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}>{fieldLabel}</span>
             <span className="text-gray-400 text-sm">›</span>
           </button>
         </div>
@@ -144,8 +172,11 @@ export default function AggiungiPage() {
         {/* Riepilogo */}
         <div className={`rounded-lg p-2.5 ${TIPO_COLORS[tipo].bg} ${TIPO_COLORS[tipo].text}`}>
           <p className="text-sm font-medium">
-            {tipoLabel(tipo)}: <strong>{oreTotali}h</strong>
-            {oreTotali > 0 && ` — ${(oreTotali / settings.ore_giornaliere).toFixed(1)} giornate`}
+            {tipoLabel(tipo)}: <strong>
+              {unita === 'giorni'
+                ? `${(oreTotali / oreG).toFixed(1)}g`
+                : `${oreTotali}h — ${(oreTotali / oreG).toFixed(1)} giornate`}
+            </strong>
           </p>
         </div>
 
@@ -164,37 +195,41 @@ export default function AggiungiPage() {
         )}
       </form>
 
-      {/* Ore picker */}
-      {showOrePicker && (
-        <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50" onClick={() => setShowOrePicker(false)}>
+      {/* Picker */}
+      {showPicker && (
+        <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50" onClick={() => setShowPicker(false)}>
           <div className="bg-white dark:bg-gray-800 rounded-t-2xl w-full max-w-lg p-4 space-y-3" onClick={e => e.stopPropagation()}>
-            <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100">Seleziona ore</h3>
+            <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100">
+              {unita === 'giorni' ? 'Seleziona giorni' : 'Seleziona ore'}
+            </h3>
 
             <div className="grid grid-cols-5 gap-1.5">
-              <button type="button" onClick={() => { setOreCustom(''); setShowOrePicker(false) }}
+              <button type="button" onClick={() => { setValueInput(''); setShowPicker(false) }}
                 className="py-2 rounded-lg bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 font-semibold text-sm border-2 border-teal-200 dark:border-teal-700 col-span-1">
-                {oreCalcolate}h
+                {autoLabel}
                 <div className="text-[10px] font-normal text-teal-500">auto</div>
               </button>
-              {QUICK_HOURS.map(h => (
-                <button key={h} type="button" onClick={() => handlePickOre(h)}
+              {quickValues.map(v => (
+                <button key={v} type="button" onClick={() => handlePickValue(v)}
                   className="py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold text-sm border-2 border-gray-200 dark:border-gray-600 hover:border-teal-300">
-                  {h}h
+                  {v}{unita === 'giorni' ? 'g' : 'h'}
                 </button>
               ))}
             </div>
 
             <div className="flex gap-2">
-              <input type="number" min="0.5" step="0.5" placeholder="Ore personalizzate" value={oreInputTemp}
-                onChange={e => setOreInputTemp(e.target.value)}
+              <input type="number" min="0.5" step={unita === 'giorni' ? '0.5' : '0.5'}
+                placeholder={unita === 'giorni' ? 'Giorni personalizzati' : 'Ore personalizzate'}
+                value={inputTemp}
+                onChange={e => setInputTemp(e.target.value)}
                 className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100" />
-              <button type="button" onClick={handleConfirmCustomOre}
+              <button type="button" onClick={handleConfirmCustom}
                 className="px-4 py-2 bg-teal-600 text-white rounded-lg font-semibold text-sm">
                 OK
               </button>
             </div>
 
-            <button type="button" onClick={() => setShowOrePicker(false)}
+            <button type="button" onClick={() => setShowPicker(false)}
               className="w-full py-2 text-gray-500 dark:text-gray-400 text-sm">
               Annulla
             </button>

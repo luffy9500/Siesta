@@ -23,6 +23,8 @@ export default function SaldiPage() {
   const [saved, setSaved] = useState(false)
 
   const tipoLabel = (t: AbsenceType) => settings.tipo_labels[t] ?? TIPO_LABELS[t]
+  const unitaOf = (t: AbsenceType) => settings.unita_tipo[t] ?? 'ore'
+  const oreG = settings.ore_giornaliere
 
   const getExisting = (tipo: AbsenceType) =>
     saldi.find(s => s.anno === anno && s.mese === mese && s.tipo === tipo)
@@ -30,7 +32,11 @@ export default function SaldiPage() {
   const handleSave = () => {
     TIPI.forEach(tipo => {
       const val = values[tipo]
-      if (val !== undefined && val !== '') upsert(anno, mese, tipo, parseFloat(val))
+      if (val !== undefined && val !== '') {
+        const parsed = parseFloat(val)
+        const ore = unitaOf(tipo) === 'giorni' ? parsed * oreG : parsed
+        upsert(anno, mese, tipo, ore)
+      }
     })
     setValues({})
     setSaved(true)
@@ -39,10 +45,13 @@ export default function SaldiPage() {
 
   const hasChanges = TIPI.some(t => values[t] !== undefined && values[t] !== '')
 
+  const fmtExisting = (tipo: AbsenceType, ore: number) =>
+    unitaOf(tipo) === 'giorni' ? `${(ore / oreG).toFixed(1)}g` : `${ore}h`
+
   return (
     <div className="p-3">
       <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 mb-0.5">Saldi da busta paga</h2>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Inserisci le ore riportate in busta ogni mese.</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Inserisci i saldi riportati in busta ogni mese.</p>
 
       <div className="flex gap-2 mb-4">
         <select value={mese} onChange={e => setMese(Number(e.target.value))}
@@ -60,19 +69,20 @@ export default function SaldiPage() {
         {TIPI.map(tipo => {
           const existing = getExisting(tipo)
           const c = TIPO_COLORS[tipo]
+          const unita = unitaOf(tipo)
           return (
             <div key={tipo} className={`rounded-xl border-2 ${c.border} ${c.bg} px-3 py-2.5`}>
               <label className={`block text-xs font-bold mb-1.5 ${c.text}`}>{tipoLabel(tipo)}</label>
               <div className="flex items-center gap-2">
                 <input type="number" min="0" step="0.5"
-                  placeholder={existing ? `${existing.ore}h (attuale)` : 'es. 128'}
+                  placeholder={existing ? `${fmtExisting(tipo, existing.ore)} (attuale)` : (unita === 'giorni' ? 'es. 30' : 'es. 128')}
                   value={values[tipo] ?? ''}
                   onChange={e => setValues(prev => ({ ...prev, [tipo]: e.target.value }))}
                   className="flex-1 border border-white bg-white/80 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
-                <span className="text-xs font-semibold text-gray-500">ore</span>
+                <span className="text-xs font-semibold text-gray-500">{unita}</span>
               </div>
               {existing && (
-                <p className="text-xs mt-1 text-gray-500">Ultimo: <strong>{existing.ore}h</strong></p>
+                <p className="text-xs mt-1 text-gray-500">Ultimo: <strong>{fmtExisting(tipo, existing.ore)}</strong></p>
               )}
             </div>
           )
@@ -96,7 +106,7 @@ export default function SaldiPage() {
                   <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                     {MESI.find(m => m.value === s.mese)?.label} {s.anno}
                   </span>
-                  <span className="text-sm font-bold text-gray-700 dark:text-gray-200">{s.ore}h</span>
+                  <span className="text-sm font-bold text-gray-700 dark:text-gray-200">{fmtExisting(s.tipo, s.ore)}</span>
                 </div>
               )
             })}
