@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { SettingsProvider } from './contexts/SettingsContext'
 import Layout from './components/Layout'
+import SplashScreen from './components/SplashScreen'
 import DashboardPage from './pages/DashboardPage'
 import CalendarioPage from './pages/CalendarioPage'
 import AggiungiPage from './pages/AggiungiPage'
@@ -42,8 +43,12 @@ function DarkModeManager() {
 }
 
 export default function App() {
+  const [splashDone, setSplashDone] = useState(false)
+  const handleSplashDone = useCallback(() => setSplashDone(true), [])
+
   return (
     <SettingsProvider>
+      {!splashDone && <SplashScreen onDone={handleSplashDone} />}
       <BrowserRouter>
         <DarkModeManager />
         <Layout>
