@@ -6,27 +6,28 @@ import { useSettings } from '../hooks/useSettings'
 import { useSaldi } from '../hooks/useSaldi'
 import { useAssenze } from '../hooks/useAssenze'
 import { TIPO_LABELS } from '../types'
+import { TIPO_OKLCH } from '../lib/tipoColors'
 import type { AbsenceType, UserSettings } from '../types'
 import { generateICS } from '../lib/ics'
 import { exportAllData, importAllData } from '../lib/storage'
 
 const GIORNI = [
-  { value: 1, label: 'Lunedì' },
-  { value: 2, label: 'Martedì' },
-  { value: 3, label: 'Mercoledì' },
-  { value: 4, label: 'Giovedì' },
-  { value: 5, label: 'Venerdì' },
-  { value: 6, label: 'Sabato' },
-  { value: 0, label: 'Domenica' },
+  { value: 1, label: 'Lun' },
+  { value: 2, label: 'Mar' },
+  { value: 3, label: 'Mer' },
+  { value: 4, label: 'Gio' },
+  { value: 5, label: 'Ven' },
+  { value: 6, label: 'Sab' },
+  { value: 0, label: 'Dom' },
 ]
 
 const TIPI: AbsenceType[] = ['ferie', 'permessi', 'rol', 'malattia']
 const TIPO_EMOJI: Record<AbsenceType, string> = { ferie: '🌴', permessi: '📋', rol: '⏰', malattia: '🤒' }
 
 const TEMI: { value: UserSettings['tema']; label: string }[] = [
-  { value: 'auto', label: 'Auto' },
-  { value: 'chiaro', label: '☀️ Chiaro' },
-  { value: 'scuro', label: '🌙 Scuro' },
+  { value: 'auto',   label: 'Auto' },
+  { value: 'chiaro', label: 'Chiaro' },
+  { value: 'scuro',  label: 'Scuro'  },
 ]
 
 function computeStats(tipo: AbsenceType, getLatest: (t: AbsenceType) => { ore: number; anno: number; mese: number } | null, assenze: ReturnType<typeof useAssenze>['assenze'], today: Date) {
@@ -45,28 +46,28 @@ function computeStats(tipo: AbsenceType, getLatest: (t: AbsenceType) => { ore: n
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
+  const a   = document.createElement('a')
   a.href = url; a.download = filename; a.click()
   URL.revokeObjectURL(url)
 }
 
 export default function ImpostazioniPage() {
   const { settings, save } = useSettings()
-  const { getLatest } = useSaldi()
-  const { assenze } = useAssenze()
+  const { getLatest }      = useSaldi()
+  const { assenze }        = useAssenze()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [ore, setOre] = useState(settings.ore_giornaliere)
-  const [giorni, setGiorni] = useState<number[]>(settings.giorni_lavorativi)
-  const [soglia, setSoglia] = useState(settings.soglia_saldo_basso)
+  const [ore, setOre]             = useState(settings.ore_giornaliere)
+  const [giorni, setGiorni]       = useState<number[]>(settings.giorni_lavorativi)
+  const [soglia, setSoglia]       = useState(settings.soglia_saldo_basso)
   const [tipoLabels, setTipoLabels] = useState<Record<AbsenceType, string>>(settings.tipo_labels)
   const [unitaTipo, setUnitaTipo] = useState<Record<AbsenceType, 'ore' | 'giorni'>>(settings.unita_tipo)
-  const [tema, setTema] = useState<UserSettings['tema']>(settings.tema)
-  const [saved, setSaved] = useState(false)
+  const [tema, setTema]           = useState<UserSettings['tema']>(settings.tema)
+  const [saved, setSaved]         = useState(false)
   const [exportStatus, setExportStatus] = useState<'idle' | 'copied' | 'shared'>('idle')
-  const [calStatus, setCalStatus] = useState<'idle' | 'done'>('idle')
+  const [calStatus, setCalStatus]   = useState<'idle' | 'done'>('idle')
   const [xlsxStatus, setXlsxStatus] = useState<'idle' | 'done'>('idle')
-  const [backupStatus, setBackupStatus] = useState<'idle' | 'done' | 'error'>('idle')
+  const [backupStatus, setBackupStatus]   = useState<'idle' | 'done' | 'error'>('idle')
   const [restoreStatus, setRestoreStatus] = useState<'idle' | 'done' | 'error'>('idle')
 
   const toggleGiorno = (v: number) => {
@@ -99,7 +100,7 @@ export default function ImpostazioniPage() {
       lines.push('')
     })
     const future = assenze.filter(a => isAfter(parseISO(a.data_inizio), today)).sort((a, b) => a.data_inizio.localeCompare(b.data_inizio))
-    const past = assenze.filter(a => !isAfter(parseISO(a.data_fine), today)).sort((a, b) => b.data_inizio.localeCompare(a.data_inizio)).slice(0, 10)
+    const past   = assenze.filter(a => !isAfter(parseISO(a.data_fine), today)).sort((a, b) => b.data_inizio.localeCompare(a.data_inizio)).slice(0, 10)
     if (future.length > 0) {
       lines.push(sep); lines.push('📅 ASSENZE PIANIFICATE')
       future.forEach(a => {
@@ -132,7 +133,7 @@ export default function ImpostazioniPage() {
   const handleExportCal = () => {
     const icsContent = generateICS(assenze)
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
+    const url  = URL.createObjectURL(blob)
     if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator as Navigator & { standalone?: boolean }).standalone) {
       window.location.href = url; setTimeout(() => URL.revokeObjectURL(url), 8000)
     } else {
@@ -181,172 +182,201 @@ export default function ImpostazioniPage() {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  const card = 'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3'
-  const label = 'block text-sm font-bold text-gray-700 dark:text-gray-200 mb-0.5'
-  const hint = 'text-xs text-gray-500 dark:text-gray-400 mb-2'
-  const inputCls = 'border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100'
-  const btnExport = 'w-full py-2 rounded-lg font-semibold text-sm transition disabled:opacity-40 disabled:cursor-not-allowed'
-
   return (
-    <div className="p-3">
-      <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 mb-3">Impostazioni</h2>
+    <div className="screen">
+      <div style={{ marginBottom: 16 }}>
+        <div className="page-title">Impostazioni</div>
+      </div>
 
-      <div className="space-y-3">
-        {/* Tema */}
-        <div className={card}>
-          <label className={label}>Tema</label>
-          <p className={hint}>Scegli il tema dell'app</p>
-          <div className="flex gap-2">
+      {/* Tema */}
+      <div className="section-label">Aspetto</div>
+      <div className="settings-group">
+        <div className="set-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+          <div className="set-label">Tema</div>
+          <div className="seg">
             {TEMI.map(t => (
-              <button
-                key={t.value}
-                type="button"
-                onClick={() => { setTema(t.value); save({ tema: t.value }) }}
-                className={`flex-1 py-1.5 rounded-lg text-sm font-semibold border-2 transition ${
-                  tema === t.value
-                    ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300'
-                    : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-300'
-                }`}
-              >
+              <button key={t.value} type="button"
+                className={`seg-btn${tema === t.value ? ' active' : ''}`}
+                onClick={() => { setTema(t.value); save({ tema: t.value }) }}>
                 {t.label}
               </button>
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Ore per giornata */}
-        <div className={card}>
-          <label className={label}>Ore per giornata lavorativa</label>
-          <p className={hint}>Usato per il calcolo automatico delle ore</p>
-          <div className="flex items-center gap-2">
-            <input type="number" min="1" max="24" step="0.5" value={ore}
-              onChange={e => setOre(parseFloat(e.target.value))}
-              className={`w-20 ${inputCls}`} />
-            <span className="text-sm text-gray-500 dark:text-gray-400">ore / giorno</span>
+      {/* Ore per giornata */}
+      <div className="section-label">Orario di lavoro</div>
+      <div className="settings-group">
+        <div className="set-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+          <div>
+            <div className="set-label">Ore per giornata lavorativa</div>
+            <div className="set-hint">Usato per il calcolo automatico delle ore</div>
+          </div>
+          <div className="stepper">
+            <button type="button" className="stepper-btn"
+              onClick={() => setOre(o => Math.max(1, +(o - 0.5).toFixed(1)))}
+              disabled={ore <= 1}>−</button>
+            <span className="stepper-val">{ore}h</span>
+            <button type="button" className="stepper-btn"
+              onClick={() => setOre(o => Math.min(24, +(o + 0.5).toFixed(1)))}>+</button>
           </div>
         </div>
 
-        {/* Giorni lavorativi */}
-        <div className={card}>
-          <label className={label}>Giorni lavorativi</label>
-          <p className={hint}>Seleziona i giorni che contano come lavorativi</p>
-          <div className="grid grid-cols-2 gap-1">
+        <div className="set-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+          <div>
+            <div className="set-label">Giorni lavorativi</div>
+            <div className="set-hint">I giorni che contano come lavorativi</div>
+          </div>
+          <div className="giorni-row">
             {GIORNI.map(g => (
-              <label key={g.value} className="flex items-center gap-2 cursor-pointer py-0.5">
-                <input type="checkbox" checked={giorni.includes(g.value)}
-                  onChange={() => toggleGiorno(g.value)}
-                  className="w-4 h-4 accent-teal-600" />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{g.label}</span>
-              </label>
+              <button key={g.value} type="button"
+                className={`giorno-pill${giorni.includes(g.value) ? ' active' : ''}`}
+                onClick={() => toggleGiorno(g.value)}>
+                {g.label}
+              </button>
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Avviso saldo basso */}
-        <div className={card}>
-          <label className={label}>Avviso saldo basso</label>
-          <p className={hint}>Evidenzia le card quando le ore disponibili scendono sotto questa soglia (0 = disabilitato)</p>
-          <div className="flex items-center gap-2">
-            <input type="number" min="0" max="200" step="0.5" value={soglia}
-              onChange={e => setSoglia(parseFloat(e.target.value) || 0)}
-              className={`w-20 ${inputCls}`} />
-            <span className="text-sm text-gray-500 dark:text-gray-400">ore</span>
+      {/* Avviso saldo basso */}
+      <div className="section-label">Avvisi</div>
+      <div className="settings-group">
+        <div className="set-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10 }}>
+          <div>
+            <div className="set-label">Avviso saldo basso</div>
+            <div className="set-hint">
+              Evidenzia quando le ore disponibili scendono sotto questa soglia (0 = disabilitato)
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <input type="range" min={0} max={160} step={4}
+              value={soglia}
+              onChange={e => setSoglia(Number(e.target.value))}
+              style={{ flex: 1 }} />
+            <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--ink)', minWidth: 40 }}>
+              {soglia === 0 ? 'Off' : `${soglia}h`}
+            </span>
           </div>
         </div>
+      </div>
 
-        {/* Etichette tipi + unità */}
-        <div className={card}>
-          <label className={label}>Tipi di assenza</label>
-          <p className={hint}>Personalizza etichetta e unità di misura (ore o giorni)</p>
-          <div className="space-y-2">
-            {TIPI.map(tipo => (
-              <div key={tipo} className="flex items-center gap-2">
-                <span className="text-xs text-gray-400 dark:text-gray-500 w-16 shrink-0">{TIPO_LABELS[tipo]}</span>
-                <input type="text" value={tipoLabels[tipo]}
+      {/* Tipi di assenza */}
+      <div className="section-label">Tipi di assenza</div>
+      <div className="settings-group">
+        {TIPI.map(tipo => {
+          const c = TIPO_OKLCH[tipo]
+          return (
+            <div key={tipo} className="set-row"
+              style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{
+                  fontSize: '0.65rem', fontWeight: 700,
+                  background: c.tint, color: c.text,
+                  border: `1px solid ${c.tintBorder}`,
+                  borderRadius: 999, padding: '2px 9px',
+                }}>
+                  {TIPO_LABELS[tipo]}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input type="text"
+                  value={tipoLabels[tipo]}
                   onChange={e => setTipoLabels(prev => ({ ...prev, [tipo]: e.target.value }))}
-                  className={`flex-1 min-w-0 ${inputCls}`} />
-                <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 shrink-0">
+                  className="text-input"
+                  style={{ flex: 1 }} />
+                <div className="seg" style={{ flexShrink: 0 }}>
                   {(['ore', 'giorni'] as const).map(u => (
-                    <button
-                      key={u}
-                      type="button"
-                      onClick={() => setUnitaTipo(prev => ({ ...prev, [tipo]: u }))}
-                      className={`px-2 py-1 text-xs font-semibold transition ${
-                        unitaTipo[tipo] === u
-                          ? 'bg-teal-600 text-white'
-                          : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
-                      }`}
-                    >
+                    <button key={u} type="button"
+                      className={`seg-btn${unitaTipo[tipo] === u ? ' active' : ''}`}
+                      onClick={() => setUnitaTipo(prev => ({ ...prev, [tipo]: u }))}>
                       {u}
                     </button>
                   ))}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Export */}
+      <div className="section-label">Esporta</div>
+      <div className="settings-group">
+        <div className="set-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+          <div className="set-hint">Riepilogo testuale con saldi e assenze</div>
+          <button type="button" onClick={handleExport} className="btn-export"
+            style={{ background: 'var(--brand-50)', color: 'var(--brand-700)', border: '1px solid var(--brand-200)' }}>
+            {exportStatus === 'copied' ? '✓ Copiato!' : exportStatus === 'shared' ? '✓ Condiviso!' : '📤 Condividi riepilogo'}
+          </button>
         </div>
 
-        {/* Export */}
-        <div className={`${card} space-y-2`}>
-          <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Esporta dati</p>
-
-          <div>
-            <p className={hint}>Riepilogo testuale con saldi e assenze</p>
-            <button type="button" onClick={handleExport}
-              className={`${btnExport} bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-700 hover:bg-teal-100`}>
-              {exportStatus === 'copied' ? '✓ Copiato!' : exportStatus === 'shared' ? '✓ Condiviso!' : '📤 Condividi riepilogo'}
-            </button>
-          </div>
-
-          <div>
-            <p className={hint}>File Excel con riepilogo saldi e dettaglio assenze</p>
-            <button type="button" onClick={handleExportXlsx} disabled={assenze.length === 0}
-              className={`${btnExport} bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700 hover:bg-green-100`}>
-              {xlsxStatus === 'done' ? '✓ Scaricato!' : '📊 Esporta Excel (.xlsx)'}
-            </button>
-          </div>
-
-          <div>
-            <p className={hint}>Compatibile con Apple Calendar e Google Calendar</p>
-            <button type="button" onClick={handleExportCal} disabled={assenze.length === 0}
-              className={`${btnExport} bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-700 hover:bg-sky-100`}>
-              {calStatus === 'done' ? '✓ Esportato!' : '📅 Apri in Calendario (.ics)'}
-            </button>
-          </div>
-
-          {assenze.length === 0 && (
-            <p className="text-xs text-gray-400 dark:text-gray-500 text-center">Nessuna assenza da esportare</p>
-          )}
+        <div className="set-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+          <div className="set-hint">File Excel con riepilogo saldi e dettaglio assenze</div>
+          <button type="button" onClick={handleExportXlsx} disabled={assenze.length === 0} className="btn-export"
+            style={{ background: 'oklch(0.97 0.04 145)', color: 'oklch(0.4 0.14 145)', border: '1px solid oklch(0.88 0.08 145)' }}>
+            {xlsxStatus === 'done' ? '✓ Scaricato!' : '📊 Esporta Excel (.xlsx)'}
+          </button>
         </div>
 
-        {/* Backup / Restore */}
-        <div className={`${card} space-y-2`}>
-          <p className="text-sm font-bold text-gray-700 dark:text-gray-200">Backup & Ripristino</p>
-          <p className={hint}>Esporta tutti i tuoi dati in un file JSON e reimportali in caso di necessità.</p>
+        <div className="set-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+          <div className="set-hint">Compatibile con Apple Calendar e Google Calendar</div>
+          <button type="button" onClick={handleExportCal} disabled={assenze.length === 0} className="btn-export"
+            style={{ background: 'oklch(0.97 0.04 230)', color: 'oklch(0.42 0.16 230)', border: '1px solid oklch(0.87 0.09 230)' }}>
+            {calStatus === 'done' ? '✓ Esportato!' : '📅 Apri in Calendario (.ics)'}
+          </button>
+        </div>
 
-          <button type="button" onClick={handleBackup}
-            className={`${btnExport} bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700 hover:bg-violet-100`}>
+        {assenze.length === 0 && (
+          <div style={{ fontSize: '0.72rem', color: 'var(--ink-faint)', textAlign: 'center', padding: '4px 0' }}>
+            Nessuna assenza da esportare
+          </div>
+        )}
+      </div>
+
+      {/* Backup */}
+      <div className="section-label">Backup & Ripristino</div>
+      <div className="settings-group">
+        <div className="set-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+          <div className="set-hint">Esporta tutti i tuoi dati in un file JSON</div>
+          <button type="button" onClick={handleBackup} className="btn-export"
+            style={{ background: 'oklch(0.97 0.04 290)', color: 'oklch(0.42 0.15 290)', border: '1px solid oklch(0.87 0.09 290)' }}>
             {backupStatus === 'done' ? '✓ Backup scaricato!' : backupStatus === 'error' ? '✗ Errore' : '💾 Scarica backup (.json)'}
           </button>
-
-          <div>
-            <input ref={fileInputRef} type="file" accept=".json" onChange={handleRestore} className="hidden" />
-            <button type="button" onClick={() => fileInputRef.current?.click()}
-              className={`${btnExport} bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700 hover:bg-orange-100`}>
-              {restoreStatus === 'done' ? '✓ Ripristino in corso…' : restoreStatus === 'error' ? '✗ File non valido' : '📂 Ripristina da backup'}
-            </button>
-          </div>
         </div>
 
-        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-3">
-          <p className="text-xs text-amber-700 dark:text-amber-300 font-medium">⚠️ I dati sono salvati localmente sul dispositivo. Usa il backup per proteggerti dalla perdita dei dati.</p>
+        <div className="set-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+          <input ref={fileInputRef} type="file" accept=".json" onChange={handleRestore} className="hidden" />
+          <button type="button" onClick={() => fileInputRef.current?.click()} className="btn-export"
+            style={{ background: 'oklch(0.97 0.04 60)', color: 'oklch(0.45 0.15 60)', border: '1px solid oklch(0.87 0.09 60)' }}>
+            {restoreStatus === 'done' ? '✓ Ripristino in corso…' : restoreStatus === 'error' ? '✗ File non valido' : '📂 Ripristina da backup'}
+          </button>
         </div>
       </div>
 
-      <button onClick={handleSave}
-        className="w-full mt-4 bg-teal-700 hover:bg-teal-800 text-white font-semibold py-2.5 rounded-xl transition shadow-md">
+      <div style={{
+        background: 'oklch(0.97 0.04 80)',
+        border: '1px solid oklch(0.88 0.08 80)',
+        borderRadius: 14,
+        padding: '10px 14px',
+        fontSize: '0.73rem',
+        color: 'oklch(0.46 0.12 70)',
+        marginBottom: 12,
+      }}>
+        ⚠️ I dati sono salvati localmente sul dispositivo. Usa il backup per proteggerti dalla perdita dei dati.
+      </div>
+
+      <button onClick={handleSave} className="btn-primary">
         {saved ? '✓ Salvato!' : 'Salva impostazioni'}
       </button>
+
+      {/* Footer */}
+      <div className="app-foot">
+        <img src="/favicon.svg" alt="" style={{ width: 28, height: 28, borderRadius: 7, opacity: 0.5 }} />
+        <div className="foot-wordmark">siesta</div>
+        <div className="foot-version">v1.0 · dati salvati localmente</div>
+      </div>
     </div>
   )
 }

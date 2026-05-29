@@ -2,8 +2,9 @@ import { useState, useMemo } from 'react'
 import { useAssenze } from '../hooks/useAssenze'
 import { useSettings } from '../hooks/useSettings'
 import { useSaldi } from '../hooks/useSaldi'
+import { TIPO_OKLCH } from '../lib/tipoColors'
 import type { AbsenceType } from '../types'
-import { TIPO_COLORS, TIPO_LABELS } from '../types'
+import { TIPO_LABELS } from '../types'
 import { parseISO, getMonth, getYear, format } from 'date-fns'
 import { it } from 'date-fns/locale'
 
@@ -20,9 +21,9 @@ export default function StatistichePage() {
   const [anno, setAnno] = useState(currentYear)
 
   const tipoLabel = (t: AbsenceType) => settings.tipo_labels[t] ?? TIPO_LABELS[t]
-  const unitaOf = (t: AbsenceType) => settings.unita_tipo[t] ?? 'ore'
-  const oreG = settings.ore_giornaliere
-  const fmtVal = (t: AbsenceType, ore: number) =>
+  const unitaOf   = (t: AbsenceType) => settings.unita_tipo[t] ?? 'ore'
+  const oreG      = settings.ore_giornaliere
+  const fmtVal    = (t: AbsenceType, ore: number) =>
     unitaOf(t) === 'giorni' ? `${(ore / oreG).toFixed(1)}g` : `${ore}h`
 
   const anni = useMemo(() => {
@@ -49,27 +50,23 @@ export default function StatistichePage() {
   const yearlyTotals = useMemo(() =>
     TIPI.map(tipo => ({
       tipo,
-      ore: monthlyData[tipo].reduce((s, v) => s + v, 0),
-      giorni: +(monthlyData[tipo].reduce((s, v) => s + v, 0) / settings.ore_giornaliere).toFixed(1),
+      ore:    monthlyData[tipo].reduce((s, v) => s + v, 0),
+      giorni: +(monthlyData[tipo].reduce((s, v) => s + v, 0) / oreG).toFixed(1),
     })),
-    [monthlyData, settings.ore_giornaliere]
+    [monthlyData, oreG]
   )
 
-  const maxOrePerMese = Math.max(...TIPI.flatMap(t => monthlyData[t]), 1)
-  const tipiConDati = TIPI.filter(t => monthlyData[t].some(v => v > 0))
+  const maxOrePerMese  = Math.max(...TIPI.flatMap(t => monthlyData[t]), 1)
+  const tipiConDati    = TIPI.filter(t => monthlyData[t].some(v => v > 0))
 
   return (
-    <div className="p-3">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-base font-bold text-gray-800 dark:text-gray-100">Statistiche</h2>
-        <div className="flex items-center gap-1">
+    <div className="screen">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div className="page-title">Statistiche</div>
+        <div className="year-tabs">
           {anni.map(a => (
             <button key={a} onClick={() => setAnno(a)}
-              className={`px-2.5 py-1 rounded-full text-xs font-semibold transition ${
-                a === anno
-                  ? 'bg-teal-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}>
+              className={`year-tab${a === anno ? ' active' : ''}`}>
               {a}
             </button>
           ))}
@@ -77,62 +74,72 @@ export default function StatistichePage() {
       </div>
 
       {assenzeAnno.length === 0 ? (
-        <div className="text-center py-12 text-gray-400 dark:text-gray-500">
-          <p className="text-3xl mb-2">📊</p>
-          <p className="text-sm">Nessuna assenza nel {anno}</p>
+        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--ink-faint)' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>📊</div>
+          <div style={{ fontSize: '0.88rem' }}>Nessuna assenza nel {anno}</div>
         </div>
       ) : (
         <>
-          {/* Totali annuali */}
-          <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="stat-cards">
             {yearlyTotals.map(({ tipo, ore, giorni }) => {
               if (ore === 0) return null
-              const c = TIPO_COLORS[tipo]
+              const c      = TIPO_OKLCH[tipo]
               const latest = getLatest(tipo)
-              const pct = latest && latest.ore > 0 ? Math.min(100, Math.round((ore / latest.ore) * 100)) : null
+              const pct    = latest && latest.ore > 0
+                ? Math.min(100, Math.round((ore / latest.ore) * 100))
+                : null
               return (
-                <div key={tipo} className={`rounded-xl p-2.5 ${c.bg} border ${c.border}`} style={{ opacity: 0.9 }}>
-                  <p className={`text-xs font-bold mb-0.5 ${c.text}`}>{tipoLabel(tipo)}</p>
-                  <p className={`text-xl font-black ${c.text}`}>{fmtVal(tipo, ore)}</p>
-                  {unitaOf(tipo) === 'ore' && <p className="text-xs text-gray-500 dark:text-gray-400">{giorni} giornate</p>}
+                <div key={tipo} className="stat-card"
+                  style={{ background: c.tint, borderColor: c.tintBorder }}>
+                  <div className="stat-type" style={{ color: c.text }}>{tipoLabel(tipo)}</div>
+                  <div className="stat-num" style={{ color: c.text }}>{fmtVal(tipo, ore)}</div>
+                  {unitaOf(tipo) === 'ore' && (
+                    <div className="stat-sub">{giorni} giornate</div>
+                  )}
                   {pct !== null && (
-                    <div className="mt-1.5">
-                      <div className="h-1 bg-white/60 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div className={`h-full ${c.bar}`} style={{ width: `${pct}%` }} />
+                    <>
+                      <div className="stat-progress">
+                        <div className="stat-fill" style={{ width: `${pct}%`, background: c.main }} />
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5">{pct}% del saldo busta</p>
-                    </div>
+                      <div className="stat-sub" style={{ marginTop: 4 }}>{pct}% del saldo busta</div>
+                    </>
                   )}
                 </div>
               )
             })}
           </div>
 
-          {/* Grafici mensili */}
           {tipiConDati.map(tipo => {
-            const c = TIPO_COLORS[tipo]
+            const c = TIPO_OKLCH[tipo]
             return (
-              <div key={tipo} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-3 mb-2">
-                <p className={`text-xs font-bold mb-2 ${c.text}`}>{tipoLabel(tipo)} — mensile</p>
-                <div className="flex items-end gap-0.5 h-16">
+              <div key={tipo} className="chart-card">
+                <div className="chart-label" style={{ color: c.text }}>
+                  {tipoLabel(tipo)} — mensile
+                </div>
+                <div className="chart-bars">
                   {monthlyData[tipo].map((ore, mi) => {
-                    const pct = ore > 0 ? Math.max(8, (ore / maxOrePerMese) * 100) : 0
+                    const h = ore > 0 ? Math.max(8, (ore / maxOrePerMese) * 56) : 0
                     return (
-                      <div key={mi} className="flex-1 flex flex-col items-center gap-0.5">
-                        <div className="w-full flex items-end justify-center" style={{ height: '48px' }}>
+                      <div key={mi} className="chart-col">
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', width: '100%' }}>
                           {ore > 0 && (
-                            <div className={`w-full rounded-t-sm ${c.bar}`} style={{ height: `${pct}%` }} title={fmtVal(tipo, ore)} />
+                            <div className="chart-bar"
+                              style={{ height: h, background: c.main }} />
                           )}
                         </div>
-                        <span className="text-[8px] text-gray-400 dark:text-gray-500 capitalize">{MESI_ABBR[mi]}</span>
+                        <span className="chart-month">{MESI_ABBR[mi]}</span>
                       </div>
                     )
                   })}
                 </div>
-                <div className="flex gap-0.5 mt-1">
+                <div style={{ display: 'flex', gap: 2, marginTop: 2 }}>
                   {monthlyData[tipo].map((ore, mi) => (
-                    <div key={mi} className="flex-1 text-center">
-                      {ore > 0 && <span className={`text-[8px] font-semibold ${c.text}`}>{fmtVal(tipo, ore)}</span>}
+                    <div key={mi} style={{ flex: 1, textAlign: 'center' }}>
+                      {ore > 0 && (
+                        <span className="chart-val" style={{ color: c.text }}>
+                          {fmtVal(tipo, ore)}
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -140,39 +147,36 @@ export default function StatistichePage() {
             )
           })}
 
-          {/* Tabella riepilogativa */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-3">
-            <p className="text-xs font-bold text-gray-700 dark:text-gray-200 mb-2">Riepilogo {anno}</p>
-            <div className="overflow-x-auto -mx-1">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-gray-400 dark:text-gray-500">
-                    <td className="pb-1.5 pr-2 font-semibold">Tipo</td>
-                    {MESI_ABBR.map((m, i) => (
-                      <td key={i} className="pb-1.5 text-center capitalize w-7">{m}</td>
-                    ))}
-                    <td className="pb-1.5 text-right font-semibold pl-1">Tot.</td>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tipiConDati.map(tipo => {
-                    const c = TIPO_COLORS[tipo]
-                    const totale = monthlyData[tipo].reduce((s, v) => s + v, 0)
-                    return (
-                      <tr key={tipo} className="border-t border-gray-50 dark:border-gray-700">
-                        <td className={`py-1.5 pr-2 font-semibold ${c.text} whitespace-nowrap`}>{tipoLabel(tipo)}</td>
-                        {monthlyData[tipo].map((ore, mi) => (
-                          <td key={mi} className="py-1.5 text-center text-gray-500 dark:text-gray-400 w-7">
-                            {ore > 0 ? fmtVal(tipo, ore) : '—'}
-                          </td>
-                        ))}
-                        <td className={`py-1.5 text-right font-bold ${c.text} pl-1`}>{fmtVal(tipo, totale)}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+          <div className="chart-card" style={{ overflowX: 'auto' }}>
+            <div className="chart-label" style={{ color: 'var(--ink)', marginBottom: 8 }}>
+              Riepilogo {anno}
             </div>
+            <table className="sum-table">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  {MESI_ABBR.map((m, i) => <th key={i}>{m}</th>)}
+                  <th style={{ textAlign: 'right' }}>Tot.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tipiConDati.map(tipo => {
+                  const c      = TIPO_OKLCH[tipo]
+                  const totale = monthlyData[tipo].reduce((s, v) => s + v, 0)
+                  return (
+                    <tr key={tipo}>
+                      <td style={{ color: c.text }}>{tipoLabel(tipo)}</td>
+                      {monthlyData[tipo].map((ore, mi) => (
+                        <td key={mi}>{ore > 0 ? fmtVal(tipo, ore) : '—'}</td>
+                      ))}
+                      <td style={{ color: c.text, textAlign: 'right' }}>
+                        {fmtVal(tipo, totale)}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         </>
       )}

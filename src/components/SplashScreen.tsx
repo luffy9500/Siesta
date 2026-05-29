@@ -5,52 +5,70 @@ interface Props {
 }
 
 export default function SplashScreen({ onDone }: Props) {
-  // starts fully visible; 'logoIn' animates the logo entrance; 'out' fades the whole screen
   const [logoIn, setLogoIn] = useState(false)
-  const [out, setOut] = useState(false)
+  const [out,    setOut]    = useState(false)
 
   useEffect(() => {
-    const t1 = setTimeout(() => setLogoIn(true), 50)   // trigger logo scale-in
-    const t2 = setTimeout(() => setOut(true),    1400)  // start fade-out
-    const t3 = setTimeout(() => onDone(),         1900)  // unmount
+    const t1 = setTimeout(() => setLogoIn(true), 50)
+    const t2 = setTimeout(() => setOut(true),    1400)
+    const t3 = setTimeout(() => onDone(),         1900)
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
   }, [onDone])
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white dark:bg-gray-900 transition-opacity duration-500"
-      style={{ opacity: out ? 0 : 1 }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        background: 'var(--bg)',
+        transition: 'opacity 0.5s ease',
+        opacity: out ? 0 : 1,
+      }}
     >
-      {/* Glow backdrop */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="w-64 h-64 rounded-full bg-violet-400/10 dark:bg-violet-500/10 blur-3xl" />
+      <div style={{
+        transition: 'transform 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+        transform: logoIn ? 'scale(1)' : 'scale(0.8)',
+      }}>
+        <img src="/favicon.svg" alt="Siesta"
+          style={{ width: 80, height: 80, borderRadius: 20, boxShadow: '0 8px 32px oklch(0 0 0 / 0.12)' }} />
       </div>
 
-      {/* Logo */}
-      <div
-        className="transition-transform duration-500"
-        style={{ transform: logoIn ? 'scale(1)' : 'scale(0.85)' }}
-      >
-        <img src="/favicon.svg" alt="Siesta" className="w-20 h-20 drop-shadow-xl" />
-      </div>
-
-      {/* App name */}
-      <p className="mt-5 text-2xl font-black tracking-tight text-gray-900 dark:text-white">
-        Siesta
+      <p style={{
+        marginTop: 20,
+        fontFamily: 'var(--font-serif)',
+        fontStyle: 'italic',
+        fontSize: '1.8rem',
+        color: 'var(--ink)',
+        letterSpacing: '-0.02em',
+        lineHeight: 1,
+      }}>
+        siesta
       </p>
-      <p className="mt-1 text-sm text-gray-400 dark:text-gray-500 font-medium">
+      <p style={{
+        marginTop: 6,
+        fontSize: '0.8rem',
+        color: 'var(--ink-faint)',
+        fontFamily: 'var(--font-ui)',
+        fontWeight: 500,
+      }}>
         Gestione ferie &amp; permessi
       </p>
 
-      {/* Loader bar */}
-      <div className="mt-10 w-16 h-0.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-violet-500 rounded-full transition-all"
-          style={{
-            width: logoIn ? '100%' : '0%',
-            transitionDuration: logoIn ? '1200ms' : '0ms',
-          }}
-        />
+      <div style={{
+        marginTop: 36,
+        width: 60, height: 3,
+        background: 'var(--line)',
+        borderRadius: 999,
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          height: '100%',
+          background: 'var(--brand-500)',
+          borderRadius: 999,
+          width: logoIn ? '100%' : '0%',
+          transition: logoIn ? 'width 1200ms ease' : 'none',
+        }} />
       </div>
     </div>
   )

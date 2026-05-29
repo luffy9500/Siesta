@@ -8,8 +8,9 @@ import {
 import { it } from 'date-fns/locale'
 import { useAssenze } from '../hooks/useAssenze'
 import { useSettings } from '../hooks/useSettings'
+import { TIPO_OKLCH } from '../lib/tipoColors'
 import type { Assenza, AbsenceType } from '../types'
-import { TIPO_COLORS, TIPO_LABELS } from '../types'
+import { TIPO_LABELS } from '../types'
 
 const DAY_HEADERS = ['Lu', 'Ma', 'Me', 'Gi', 'Ve', 'Sa', 'Do']
 const TIPI: AbsenceType[] = ['ferie', 'permessi', 'rol', 'malattia']
@@ -17,7 +18,7 @@ const TIPI: AbsenceType[] = ['ferie', 'permessi', 'rol', 'malattia']
 function getAssenzeForDay(day: Date, assenze: Assenza[]): Assenza[] {
   return assenze.filter(a => {
     const start = parseISO(a.data_inizio)
-    const end = parseISO(a.data_fine)
+    const end   = parseISO(a.data_fine)
     return isWithinInterval(startOfDay(day), { start: startOfDay(start), end: startOfDay(end) })
   })
 }
@@ -43,8 +44,8 @@ export default function CalendarioPage() {
 
   const days = useMemo(() => {
     const start = startOfMonth(current)
-    const end = endOfMonth(current)
-    const all = eachDayOfInterval({ start, end })
+    const end   = endOfMonth(current)
+    const all   = eachDayOfInterval({ start, end })
     const startDow = (getDay(start) + 6) % 7
     return [...Array(startDow).fill(null), ...all]
   }, [current])
@@ -60,13 +61,10 @@ export default function CalendarioPage() {
   }, [days, assenzeFiltrate])
 
   const handleDayClick = (day: Date) => {
-    const key = format(day, 'yyyy-MM-dd')
+    const key  = format(day, 'yyyy-MM-dd')
     const list = assenzeMap.get(key) ?? []
-    if (list.length > 0) {
-      setSelectedDay({ date: key, list })
-    } else {
-      navigate(`/aggiungi?data=${key}`)
-    }
+    if (list.length > 0) setSelectedDay({ date: key, list })
+    else navigate(`/aggiungi?data=${key}`)
   }
 
   const handleDelete = (id: string) => {
@@ -81,69 +79,86 @@ export default function CalendarioPage() {
     }
   }
 
+  const unitaOf = (t: AbsenceType) => settings.unita_tipo[t] ?? 'ore'
+  const fmtOre = (a: Assenza) => {
+    const u = unitaOf(a.tipo)
+    return u === 'giorni'
+      ? `${(a.ore / settings.ore_giornaliere).toFixed(1)}g`
+      : `${a.ore}h`
+  }
+
   return (
-    <div className="p-3">
-      <div className="flex items-center justify-between mb-3">
-        <button onClick={() => setCurrent(subMonths(current, 1))} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-xl text-gray-700 dark:text-gray-200">‹</button>
-        <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 capitalize">
-          {format(current, 'MMMM yyyy', { locale: it })}
-        </h2>
-        <button onClick={() => setCurrent(addMonths(current, 1))} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-xl text-gray-700 dark:text-gray-200">›</button>
+    <div className="screen">
+      {/* Month nav */}
+      <div className="cal-head">
+        <button className="cal-nav" onClick={() => setCurrent(subMonths(current, 1))}>‹</button>
+        <span className="cal-month">{format(current, 'MMMM yyyy', { locale: it })}</span>
+        <button className="cal-nav" onClick={() => setCurrent(addMonths(current, 1))}>›</button>
       </div>
 
-      {/* Legenda / filtri */}
-      <div className="flex flex-wrap gap-1.5 mb-2">
+      {/* Filters */}
+      <div className="cal-filters">
         {TIPI.map(t => {
-          const attivo = filtriAttivi.includes(t)
-          const isFiltrato = filtriAttivi.length > 0 && !attivo
+          const attivo   = filtriAttivi.includes(t)
+          const isFaded  = filtriAttivi.length > 0 && !attivo
+          const c = TIPO_OKLCH[t]
           return (
             <button key={t} onClick={() => toggleFiltro(t)}
-              className={`text-xs px-2 py-0.5 rounded-full transition border ${
-                isFiltrato
-                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-600'
-                  : `${TIPO_COLORS[t].bg} ${TIPO_COLORS[t].text} border-transparent`
-              } ${attivo ? 'ring-2 ring-offset-1 ' + TIPO_COLORS[t].border : ''}`}>
+              className={`cal-chip${attivo ? ' chip-active' : ''}${isFaded ? ' chip-faded' : ''}`}
+              style={attivo ? { '--chip-color': c.main } as React.CSSProperties : {}}>
               {tipoLabel(t)}
             </button>
           )
         })}
         {filtriAttivi.length > 0 && (
           <button onClick={() => setFiltriAttivi([])}
-            className="text-xs px-2 py-0.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300">
+            className="cal-chip"
+            style={{ background: 'var(--surface-2)' }}>
             × Tutti
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-7 gap-0.5 mb-0.5">
+      {/* Day-of-week headers */}
+      <div className="cal-grid" style={{ marginBottom: 3 }}>
         {DAY_HEADERS.map(d => (
-          <div key={d} className="text-center text-xs font-semibold text-gray-400 dark:text-gray-500">{d}</div>
+          <div key={d} className="cal-dow">{d}</div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-0.5">
+      {/* Calendar grid */}
+      <div className="cal-grid">
         {days.map((day, i) => {
           if (!day) return <div key={`empty-${i}`} />
-          const key = format(day, 'yyyy-MM-dd')
+          const key       = format(day, 'yyyy-MM-dd')
           const dayAssenze = assenzeMap.get(key) ?? []
-          const inMonth = isSameMonth(day, current)
+          const inMonth   = isSameMonth(day, current)
 
           return (
             <button key={key} onClick={() => handleDayClick(day)}
-              className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs relative overflow-hidden cursor-pointer hover:opacity-80 transition-opacity
-                ${inMonth ? 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100' : 'bg-gray-50 dark:bg-gray-700/40 text-gray-300 dark:text-gray-600'}
-                ${isToday(day) ? 'ring-2 ring-teal-500' : ''}
-              `}>
+              className={`cal-cell${!inMonth ? ' out-month' : ''}${isToday(day) ? ' today' : ''}`}>
               {dayAssenze.length > 0 && (
-                <div className="absolute inset-0 flex">
-                  {dayAssenze.map((a, ai) => <div key={ai} className={`flex-1 ${TIPO_COLORS[a.tipo].cal}`} />)}
+                <div className="cal-fills">
+                  {dayAssenze.map((a, ai) => (
+                    <div key={ai} style={{ flex: 1, background: TIPO_OKLCH[a.tipo].cal }} />
+                  ))}
                 </div>
               )}
-              <span className={`relative z-10 font-semibold ${dayAssenze.length > 0 ? TIPO_COLORS[dayAssenze[0].tipo].text : ''}`}>
+              <span style={{
+                position: 'relative', zIndex: 1,
+                color: dayAssenze.length > 0 ? TIPO_OKLCH[dayAssenze[0].tipo].text : undefined,
+                fontWeight: dayAssenze.length > 0 ? 800 : 700,
+              }}>
                 {format(day, 'd')}
               </span>
               {dayAssenze.length > 1 && (
-                <span className="relative z-10 text-[8px] leading-none font-bold text-white/90 bg-black/20 rounded-full px-1">
+                <span style={{
+                  position: 'relative', zIndex: 1,
+                  fontSize: 8, lineHeight: 1, fontWeight: 800,
+                  color: 'white',
+                  background: 'oklch(0 0 0 / 0.22)',
+                  borderRadius: 999, padding: '1px 4px',
+                }}>
                   {dayAssenze.length}
                 </span>
               )}
@@ -152,59 +167,70 @@ export default function CalendarioPage() {
         })}
       </div>
 
-      {/* Bottom sheet */}
+      {/* Day sheet */}
       {selectedDay && (
-        <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50" onClick={() => setSelectedDay(null)}>
-          <div className="bg-white dark:bg-gray-800 rounded-t-2xl w-full max-w-lg p-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-bold text-gray-700 dark:text-gray-200">
-                {format(parseISO(selectedDay.date), 'd MMMM yyyy', { locale: it })}
-              </p>
+        <div className="sheet-scrim" onClick={() => setSelectedDay(null)}>
+          <div className="sheet-panel" onClick={e => e.stopPropagation()}>
+            <div className="sheet-grab" />
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div>
+                <div className="sheet-title">
+                  {format(parseISO(selectedDay.date), 'd MMMM yyyy', { locale: it })}
+                </div>
+              </div>
               <button onClick={() => navigate(`/aggiungi?data=${selectedDay.date}`)}
-                className="text-xs text-teal-600 dark:text-teal-400 font-semibold border border-teal-300 dark:border-teal-600 rounded-full px-2 py-0.5">
+                className="sheet-add-btn">
                 + Aggiungi
               </button>
             </div>
-            <div className="space-y-2">
-              {selectedDay.list.map(assenza => (
-                <div key={assenza.id} className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-                  <div className={`h-0.5 ${TIPO_COLORS[assenza.tipo].accent}`} />
-                  <div className="px-3 py-2.5">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${TIPO_COLORS[assenza.tipo].bg} ${TIPO_COLORS[assenza.tipo].text}`}>
-                        {tipoLabel(assenza.tipo)}
-                      </span>
+
+            {selectedDay.list.map(assenza => {
+              const c = TIPO_OKLCH[assenza.tipo]
+              return (
+                <div key={assenza.id} className="day-card">
+                  <div className="day-card-accent" style={{ background: c.main }} />
+                  <div className="day-card-body">
+                    <span className="day-tag"
+                      style={{ background: c.tint, color: c.text, border: `1px solid ${c.tintBorder}` }}>
+                      {tipoLabel(assenza.tipo)}
+                    </span>
+                    <div className="day-card-row">
+                      <span>Dal</span>
+                      <span>{format(parseISO(assenza.data_inizio), 'd MMM yyyy', { locale: it })}</span>
                     </div>
-                    <div className="space-y-0.5 text-xs text-gray-700 dark:text-gray-300 mb-2">
-                      <div className="flex justify-between">
-                        <span>Dal</span><span className="font-medium">{format(parseISO(assenza.data_inizio), 'd MMM yyyy', { locale: it })}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Al</span><span className="font-medium">{format(parseISO(assenza.data_fine), 'd MMM yyyy', { locale: it })}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Ore</span><span className="font-medium">{assenza.ore}h</span>
-                      </div>
-                      {assenza.note && (
-                        <div className="flex justify-between">
-                          <span>Note</span><span className="font-medium">{assenza.note}</span>
-                        </div>
-                      )}
+                    <div className="day-card-row">
+                      <span>Al</span>
+                      <span>{format(parseISO(assenza.data_fine), 'd MMM yyyy', { locale: it })}</span>
                     </div>
-                    <div className="flex gap-1.5">
-                      <button onClick={() => { setSelectedDay(null); navigate(`/aggiungi?edit=${assenza.id}`) }}
-                        className="flex-1 py-1.5 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 font-semibold rounded-lg text-xs hover:bg-teal-100 transition">
+                    <div className="day-card-row">
+                      <span>Ore</span>
+                      <span>{fmtOre(assenza)}</span>
+                    </div>
+                    {assenza.note && (
+                      <div className="day-card-row">
+                        <span>Note</span>
+                        <span>{assenza.note}</span>
+                      </div>
+                    )}
+                    <div className="day-actions">
+                      <button className="btn-soft"
+                        style={{ background: c.tint, color: c.text }}
+                        onClick={() => { setSelectedDay(null); navigate(`/aggiungi?edit=${assenza.id}`) }}>
                         ✏️ Modifica
                       </button>
-                      <button onClick={() => handleDelete(assenza.id)}
-                        className="flex-1 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-semibold rounded-lg text-xs hover:bg-red-100 transition">
+                      <button className="btn-soft"
+                        style={{
+                          background: 'oklch(0.97 0.03 25)',
+                          color: 'oklch(0.45 0.18 25)',
+                        }}
+                        onClick={() => handleDelete(assenza.id)}>
                         🗑 Elimina
                       </button>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              )
+            })}
           </div>
         </div>
       )}
