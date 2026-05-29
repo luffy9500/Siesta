@@ -3,8 +3,9 @@ import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
 import { useSaldi } from '../hooks/useSaldi'
 import { useSettings } from '../hooks/useSettings'
+import { TIPO_OKLCH } from '../lib/tipoColors'
 import type { AbsenceType } from '../types'
-import { TIPO_LABELS, TIPO_COLORS } from '../types'
+import { TIPO_LABELS } from '../types'
 
 const TIPI: AbsenceType[] = ['ferie', 'permessi', 'rol', 'malattia']
 
@@ -23,8 +24,8 @@ export default function SaldiPage() {
   const [saved, setSaved] = useState(false)
 
   const tipoLabel = (t: AbsenceType) => settings.tipo_labels[t] ?? TIPO_LABELS[t]
-  const unitaOf = (t: AbsenceType) => settings.unita_tipo[t] ?? 'ore'
-  const oreG = settings.ore_giornaliere
+  const unitaOf   = (t: AbsenceType) => settings.unita_tipo[t] ?? 'ore'
+  const oreG      = settings.ore_giornaliere
 
   const getExisting = (tipo: AbsenceType) =>
     saldi.find(s => s.anno === anno && s.mese === mese && s.tipo === tipo)
@@ -34,7 +35,7 @@ export default function SaldiPage() {
       const val = values[tipo]
       if (val !== undefined && val !== '') {
         const parsed = parseFloat(val)
-        const ore = unitaOf(tipo) === 'giorni' ? parsed * oreG : parsed
+        const ore    = unitaOf(tipo) === 'giorni' ? parsed * oreG : parsed
         upsert(anno, mese, tipo, ore)
       }
     })
@@ -49,68 +50,103 @@ export default function SaldiPage() {
     unitaOf(tipo) === 'giorni' ? `${(ore / oreG).toFixed(1)}g` : `${ore}h`
 
   return (
-    <div className="p-3">
-      <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 mb-0.5">Saldi da busta paga</h2>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Inserisci i saldi riportati in busta ogni mese.</p>
+    <div className="screen">
+      <div style={{ marginBottom: 16 }}>
+        <div className="page-title">Saldi da busta paga</div>
+        <div className="page-sub">Inserisci i saldi riportati in busta ogni mese.</div>
+      </div>
 
-      <div className="flex gap-2 mb-4">
-        <select value={mese} onChange={e => setMese(Number(e.target.value))}
-          className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 capitalize bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100">
-          {MESI.map(m => (
-            <option key={m.value} value={m.value} className="capitalize">{m.label}</option>
-          ))}
-        </select>
+      {/* Period selector */}
+      <div className="saldi-period">
+        <div className="select-wrap">
+          <select value={mese} onChange={e => setMese(Number(e.target.value))}>
+            {MESI.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+        </div>
         <input type="number" value={anno} onChange={e => setAnno(Number(e.target.value))}
-          className="w-20 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
-          min="2020" max="2099" />
+          min="2020" max="2099"
+          style={{
+            width: 78,
+            border: '1.5px solid var(--line-2)',
+            borderRadius: 'var(--r-input)',
+            padding: '9px 12px',
+            fontFamily: 'var(--font-ui)',
+            fontSize: '0.85rem',
+            background: 'var(--surface)',
+            color: 'var(--ink)',
+            outline: 'none',
+          }} />
       </div>
 
-      <div className="space-y-2 mb-4">
-        {TIPI.map(tipo => {
-          const existing = getExisting(tipo)
-          const c = TIPO_COLORS[tipo]
-          const unita = unitaOf(tipo)
-          return (
-            <div key={tipo} className={`rounded-xl border-2 ${c.border} ${c.bg} px-3 py-2.5`}>
-              <label className={`block text-xs font-bold mb-1.5 ${c.text}`}>{tipoLabel(tipo)}</label>
-              <div className="flex items-center gap-2">
-                <input type="number" min="0" step="0.5"
-                  placeholder={existing ? `${fmtExisting(tipo, existing.ore)} (attuale)` : (unita === 'giorni' ? 'es. 30' : 'es. 128')}
-                  value={values[tipo] ?? ''}
-                  onChange={e => setValues(prev => ({ ...prev, [tipo]: e.target.value }))}
-                  className="flex-1 border border-white bg-white/80 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500" />
-                <span className="text-xs font-semibold text-gray-500">{unita}</span>
-              </div>
-              {existing && (
-                <p className="text-xs mt-1 text-gray-500">Ultimo: <strong>{fmtExisting(tipo, existing.ore)}</strong></p>
-              )}
+      {/* Cards */}
+      {TIPI.map(tipo => {
+        const existing = getExisting(tipo)
+        const c        = TIPO_OKLCH[tipo]
+        const unita    = unitaOf(tipo)
+        return (
+          <div key={tipo} className="saldi-card"
+            style={{
+              background: c.tint,
+              borderColor: c.tintBorder,
+            }}>
+            <div style={{
+              fontSize: '0.73rem', fontWeight: 800,
+              color: c.text,
+              textTransform: 'uppercase', letterSpacing: '0.07em',
+              marginBottom: 8,
+            }}>
+              {tipoLabel(tipo)}
             </div>
-          )
-        })}
-      </div>
+            <div className="saldi-input-row">
+              <input type="number" min="0" step="0.5"
+                placeholder={existing ? `${fmtExisting(tipo, existing.ore)} (attuale)` : (unita === 'giorni' ? 'es. 30' : 'es. 128')}
+                value={values[tipo] ?? ''}
+                onChange={e => setValues(prev => ({ ...prev, [tipo]: e.target.value }))}
+                className="saldi-input" />
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: c.text }}>
+                {unita}
+              </span>
+            </div>
+            {existing && (
+              <div style={{ fontSize: '0.68rem', color: c.text, opacity: 0.7, marginTop: 6 }}>
+                Ultimo: <strong style={{ opacity: 1 }}>{fmtExisting(tipo, existing.ore)}</strong>
+              </div>
+            )}
+          </div>
+        )
+      })}
 
-      <button onClick={handleSave} disabled={!hasChanges}
-        className="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold py-2.5 rounded-xl transition disabled:opacity-40 shadow-md text-sm">
+      <button onClick={handleSave} disabled={!hasChanges} className="btn-primary"
+        style={{ marginTop: 4 }}>
         {saved ? '✓ Salvato!' : 'Salva saldi'}
       </button>
 
       {saldi.length > 0 && (
-        <div className="mt-6">
-          <h3 className="text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">Storico</h3>
-          <div className="space-y-1.5">
-            {saldi.slice(0, 20).map(s => {
-              const c = TIPO_COLORS[s.tipo]
-              return (
-                <div key={s.id} className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg px-3 py-2 border border-gray-100 dark:border-gray-700">
-                  <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${c.bg} ${c.text}`}>{tipoLabel(s.tipo)}</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                    {MESI.find(m => m.value === s.mese)?.label} {s.anno}
-                  </span>
-                  <span className="text-sm font-bold text-gray-700 dark:text-gray-200">{fmtExisting(s.tipo, s.ore)}</span>
-                </div>
-              )
-            })}
-          </div>
+        <div className="storico-list">
+          <div className="section-label">Storico</div>
+          {saldi.slice(0, 20).map(s => {
+            const c = TIPO_OKLCH[s.tipo]
+            return (
+              <div key={s.id} className="storico-row">
+                <span style={{
+                  fontSize: '0.7rem', fontWeight: 700,
+                  background: c.tint, color: c.text,
+                  border: `1px solid ${c.tintBorder}`,
+                  borderRadius: 999, padding: '2px 9px',
+                }}>
+                  {tipoLabel(s.tipo)}
+                </span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--ink-faint)', textTransform: 'capitalize' }}>
+                  {MESI.find(m => m.value === s.mese)?.label} {s.anno}
+                </span>
+                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--ink)' }}>
+                  {fmtExisting(s.tipo, s.ore)}
+                </span>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

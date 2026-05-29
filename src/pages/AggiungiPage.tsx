@@ -3,8 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { differenceInCalendarDays, parseISO, eachDayOfInterval, getDay, format } from 'date-fns'
 import { useAssenze } from '../hooks/useAssenze'
 import { useSettings } from '../hooks/useSettings'
+import { TIPO_OKLCH } from '../lib/tipoColors'
 import type { AbsenceType } from '../types'
-import { TIPO_LABELS, TIPO_COLORS } from '../types'
+import { TIPO_LABELS } from '../types'
 
 const TIPI: AbsenceType[] = ['ferie', 'permessi', 'rol', 'malattia']
 const QUICK_HOURS = [1, 2, 4, 8]
@@ -16,16 +17,15 @@ export default function AggiungiPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
-  const editId = searchParams.get('edit')
-  const dataParam = searchParams.get('data')
+  const editId     = searchParams.get('edit')
+  const dataParam  = searchParams.get('data')
   const editAssenza = editId ? assenze.find(a => a.id === editId) ?? null : null
 
   const defaultDate = dataParam ?? format(new Date(), 'yyyy-MM-dd')
 
-  const [tipo, setTipo] = useState<AbsenceType>(editAssenza?.tipo ?? 'ferie')
+  const [tipo, setTipo]           = useState<AbsenceType>(editAssenza?.tipo ?? 'ferie')
   const [dataInizio, setDataInizio] = useState(editAssenza?.data_inizio ?? defaultDate)
-  const [dataFine, setDataFine] = useState(editAssenza?.data_fine ?? defaultDate)
-  // valueInput stores the user-facing value in the configured unit (ore or giorni)
+  const [dataFine, setDataFine]   = useState(editAssenza?.data_fine ?? defaultDate)
   const [valueInput, setValueInput] = useState<string>(() => {
     if (!editAssenza) return ''
     const u = settings.unita_tipo[editAssenza.tipo] ?? 'ore'
@@ -33,8 +33,8 @@ export default function AggiungiPage() {
       ? String(editAssenza.ore / settings.ore_giornaliere)
       : String(editAssenza.ore)
   })
-  const [note, setNote] = useState(editAssenza?.note ?? '')
-  const [error, setError] = useState<string | null>(null)
+  const [note, setNote]           = useState(editAssenza?.note ?? '')
+  const [error, setError]         = useState<string | null>(null)
   const [showPicker, setShowPicker] = useState(false)
   const [inputTemp, setInputTemp] = useState('')
 
@@ -52,35 +52,29 @@ export default function AggiungiPage() {
   }, [editId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const tipoLabel = (t: AbsenceType) => settings.tipo_labels[t] ?? TIPO_LABELS[t]
-  const unita = settings.unita_tipo[tipo] ?? 'ore'
-  const oreG  = settings.ore_giornaliere
+  const unita   = settings.unita_tipo[tipo] ?? 'ore'
+  const oreG    = settings.ore_giornaliere
+  const c       = TIPO_OKLCH[tipo]
 
-  // always in hours
   const oreCalcolate = useMemo(() => {
     if (!dataInizio || !dataFine) return 0
     try {
       const start = parseISO(dataInizio)
-      const end = parseISO(dataFine)
+      const end   = parseISO(dataFine)
       if (differenceInCalendarDays(end, start) < 0) return 0
       const days = eachDayOfInterval({ start, end })
-      const lavorativi = days.filter(d => settings.giorni_lavorativi.includes(getDay(d)))
-      return lavorativi.length * oreG
+      return days.filter(d => settings.giorni_lavorativi.includes(getDay(d))).length * oreG
     } catch { return 0 }
   }, [dataInizio, dataFine, settings])
 
-  // auto value displayed in current unit
-  const autoLabel = unita === 'giorni'
-    ? `${oreCalcolate / oreG}g`
-    : `${oreCalcolate}h`
-
-  // total hours for saving
-  const oreTotali = valueInput !== ''
+  const autoLabel  = unita === 'giorni' ? `${oreCalcolate / oreG}g` : `${oreCalcolate}h`
+  const oreTotali  = valueInput !== ''
     ? (unita === 'giorni' ? parseFloat(valueInput) * oreG : parseFloat(valueInput))
     : oreCalcolate
-
   const fieldLabel = valueInput !== ''
     ? `${valueInput}${unita === 'giorni' ? 'g' : 'h'}`
     : `${autoLabel} (auto)`
+  const quickValues = unita === 'giorni' ? QUICK_DAYS : QUICK_HOURS
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -102,26 +96,29 @@ export default function AggiungiPage() {
     setShowPicker(false)
   }
 
-  const quickValues = unita === 'giorni' ? QUICK_DAYS : QUICK_HOURS
-
   return (
-    <div className="p-3">
-      <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 mb-3">
+    <div className="form-page">
+      <div className="page-title" style={{ marginBottom: 14 }}>
         {editId ? 'Modifica assenza' : 'Aggiungi assenza'}
-      </h2>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <form onSubmit={handleSubmit}>
         {/* Tipo */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Tipo</label>
-          <div className="grid grid-cols-2 gap-1.5">
+        <div className="field">
+          <div className="field-label">Tipo</div>
+          <div className="tipo-grid">
             {TIPI.map(t => {
-              const c = TIPO_COLORS[t]
+              const tc = TIPO_OKLCH[t]
+              const sel = tipo === t
               return (
-                <button key={t} type="button" onClick={() => { setTipo(t); setValueInput('') }}
-                  className={`py-2 rounded-lg border-2 text-sm font-semibold transition
-                    ${tipo === t ? `${c.border} ${c.bg} ${c.text}` : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 dark:bg-gray-800'}
-                  `}>
+                <button key={t} type="button"
+                  onClick={() => { setTipo(t); setValueInput('') }}
+                  className="tipo-btn"
+                  style={sel ? {
+                    borderColor: tc.main,
+                    background: tc.tint,
+                    color: tc.text,
+                  } : {}}>
                   {tipoLabel(t)}
                 </button>
               )
@@ -129,67 +126,61 @@ export default function AggiungiPage() {
           </div>
         </div>
 
-        {/* Dal / Al */}
-        <div className="grid grid-cols-2 gap-2">
-          {([
-            { label: 'Dal', value: dataInizio, onChange: (v: string) => { setDataInizio(v); if (v > dataFine) setDataFine(v) }, min: undefined },
-            { label: 'Al',  value: dataFine,   onChange: (v: string) => setDataFine(v), min: dataInizio },
-          ] as const).map(({ label, value, onChange, min }) => (
-            <div key={label}>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
-              <div className="relative border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 overflow-hidden">
-                <div className="px-3 py-2 text-sm text-gray-800 dark:text-gray-100 pointer-events-none">
-                  {format(parseISO(value), 'd MMM yyyy')}
+        {/* Date */}
+        <div className="field">
+          <div className="field-row">
+            {([
+              { label: 'Dal', value: dataInizio, onChange: (v: string) => { setDataInizio(v); if (v > dataFine) setDataFine(v) }, min: undefined },
+              { label: 'Al',  value: dataFine,   onChange: (v: string) => setDataFine(v), min: dataInizio },
+            ] as const).map(({ label, value, onChange, min }) => (
+              <div key={label}>
+                <div className="field-label" style={{ marginBottom: 5 }}>{label}</div>
+                <div className="date-wrapper">
+                  <div className="date-display">{format(parseISO(value), 'd MMM yyyy')}</div>
+                  <input type="date" required value={value} min={min}
+                    onChange={e => onChange(e.target.value)}
+                    className="date-native" />
                 </div>
-                <input type="date" required value={value} min={min}
-                  onChange={e => onChange(e.target.value)}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        {/* Ore / Giorni */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {unita === 'giorni' ? 'Giorni' : 'Ore'}
-          </label>
+        {/* Valore */}
+        <div className="field">
+          <div className="field-label">{unita === 'giorni' ? 'Giorni' : 'Ore'}</div>
           <button type="button" onClick={() => { setInputTemp(''); setShowPicker(true) }}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm text-left bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500 flex items-center justify-between">
-            <span className={valueInput !== '' ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}>{fieldLabel}</span>
-            <span className="text-gray-400 text-sm">›</span>
+            className={`value-trigger${valueInput === '' ? ' placeholder' : ''}`}>
+            <span>{fieldLabel}</span>
+            <span style={{ color: 'var(--ink-faint)', fontSize: '0.8rem' }}>›</span>
           </button>
         </div>
 
         {/* Note */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Note (opzionale)</label>
+        <div className="field">
+          <div className="field-label">Note (opzionale)</div>
           <input type="text" placeholder="es. Visita medica" value={note}
             onChange={e => setNote(e.target.value)}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100" />
+            className="text-input" />
         </div>
 
         {/* Riepilogo */}
-        <div className={`rounded-lg p-2.5 ${TIPO_COLORS[tipo].bg} ${TIPO_COLORS[tipo].text}`}>
-          <p className="text-sm font-medium">
-            {tipoLabel(tipo)}: <strong>
-              {unita === 'giorni'
-                ? `${(oreTotali / oreG).toFixed(1)}g`
-                : `${oreTotali}h — ${(oreTotali / oreG).toFixed(1)} giornate`}
-            </strong>
-          </p>
+        <div className="form-riepilogo" style={{ background: c.tint, color: c.text }}>
+          {tipoLabel(tipo)}: <strong>
+            {unita === 'giorni'
+              ? `${(oreTotali / oreG).toFixed(1)}g`
+              : `${oreTotali}h — ${(oreTotali / oreG).toFixed(1)} giornate`}
+          </strong>
         </div>
 
-        {error && <p className="text-red-600 text-sm bg-red-50 rounded-lg p-2">{error}</p>}
+        {error && <div className="form-error">{error}</div>}
 
-        <button type="submit"
-          className="w-full bg-teal-700 hover:bg-teal-800 text-white font-semibold py-2.5 rounded-xl transition shadow-md text-sm">
+        <button type="submit" className="btn-primary">
           {editId ? 'Salva modifiche' : 'Salva assenza'}
         </button>
 
         {editId && (
-          <button type="button" onClick={() => navigate(-1)}
-            className="w-full py-2 text-gray-500 dark:text-gray-400 text-sm font-medium">
+          <button type="button" onClick={() => navigate(-1)} className="btn-ghost">
             Annulla
           </button>
         )}
@@ -197,40 +188,46 @@ export default function AggiungiPage() {
 
       {/* Picker */}
       {showPicker && (
-        <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50" onClick={() => setShowPicker(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-t-2xl w-full max-w-lg p-4 space-y-3" onClick={e => e.stopPropagation()}>
-            <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100">
+        <div className="sheet-scrim" onClick={() => setShowPicker(false)}>
+          <div className="sheet-panel" onClick={e => e.stopPropagation()}>
+            <div className="sheet-grab" />
+            <div className="sheet-title">
               {unita === 'giorni' ? 'Seleziona giorni' : 'Seleziona ore'}
-            </h3>
+            </div>
 
-            <div className="grid grid-cols-5 gap-1.5">
+            <div className="picker-grid">
               <button type="button" onClick={() => { setValueInput(''); setShowPicker(false) }}
-                className="py-2 rounded-lg bg-teal-50 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 font-semibold text-sm border-2 border-teal-200 dark:border-teal-700 col-span-1">
+                className="pick-btn pick-auto">
                 {autoLabel}
-                <div className="text-[10px] font-normal text-teal-500">auto</div>
+                <span className="pick-sub">auto</span>
               </button>
               {quickValues.map(v => (
                 <button key={v} type="button" onClick={() => handlePickValue(v)}
-                  className="py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold text-sm border-2 border-gray-200 dark:border-gray-600 hover:border-teal-300">
+                  className="pick-btn">
                   {v}{unita === 'giorni' ? 'g' : 'h'}
                 </button>
               ))}
             </div>
 
-            <div className="flex gap-2">
-              <input type="number" min="0.5" step={unita === 'giorni' ? '0.5' : '0.5'}
-                placeholder={unita === 'giorni' ? 'Giorni personalizzati' : 'Ore personalizzate'}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <input type="number" min="0.5" step="0.5"
+                placeholder={unita === 'giorni' ? 'Giorni pers.' : 'Ore pers.'}
                 value={inputTemp}
                 onChange={e => setInputTemp(e.target.value)}
-                className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100" />
+                className="text-input" style={{ marginBottom: 0 }} />
               <button type="button" onClick={handleConfirmCustom}
-                className="px-4 py-2 bg-teal-600 text-white rounded-lg font-semibold text-sm">
+                style={{
+                  padding: '10px 18px', borderRadius: 12,
+                  background: 'var(--brand-600)', color: 'white',
+                  fontFamily: 'var(--font-ui)', fontWeight: 700, fontSize: '0.88rem',
+                  border: 'none', cursor: 'pointer', flexShrink: 0,
+                }}>
                 OK
               </button>
             </div>
 
-            <button type="button" onClick={() => setShowPicker(false)}
-              className="w-full py-2 text-gray-500 dark:text-gray-400 text-sm">
+            <button type="button" onClick={() => setShowPicker(false)} className="btn-ghost"
+              style={{ marginTop: 0 }}>
               Annulla
             </button>
           </div>
