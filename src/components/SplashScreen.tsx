@@ -37,7 +37,7 @@ export default function SplashScreen({ onDone }: Props) {
       <p style={{
         marginTop: 20,
         fontFamily: 'var(--font-serif)',
-        fontStyle: 'italic',
+        fontStyle: 'normal',
         fontSize: '1.8rem',
         color: 'var(--ink)',
         letterSpacing: '-0.02em',
