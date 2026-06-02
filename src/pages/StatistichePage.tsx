@@ -101,7 +101,6 @@ export default function StatistichePage() {
   )
 
   const totaleAnno = yearlyTotals.reduce((s, t) => s + t.ore, 0)
-  const maxOrePerMese = Math.max(...TIPI.flatMap(t => monthlyData[t]), 1)
   const tipiConDati   = TIPI.filter(t => monthlyData[t].some(v => v > 0))
 
   return (
