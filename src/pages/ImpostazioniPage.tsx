@@ -61,7 +61,6 @@ export default function ImpostazioniPage() {
   const [giorni, setGiorni]       = useState<number[]>(settings.giorni_lavorativi)
   const [soglia, setSoglia]       = useState(settings.soglia_saldo_basso)
   const [tipoLabels, setTipoLabels] = useState<Record<AbsenceType, string>>(settings.tipo_labels)
-  const [unitaTipo, setUnitaTipo] = useState<Record<AbsenceType, 'ore' | 'giorni'>>(settings.unita_tipo)
   const [tema, setTema]           = useState<UserSettings['tema']>(settings.tema)
   const [saved, setSaved]         = useState(false)
   const [exportStatus, setExportStatus] = useState<'idle' | 'copied' | 'shared'>('idle')
@@ -75,7 +74,7 @@ export default function ImpostazioniPage() {
   }
 
   const handleSave = () => {
-    save({ ore_giornaliere: ore, giorni_lavorativi: giorni, soglia_saldo_basso: soglia, tipo_labels: tipoLabels, unita_tipo: unitaTipo, tema })
+    save({ ore_giornaliere: ore, giorni_lavorativi: giorni, soglia_saldo_basso: soglia, tipo_labels: tipoLabels, tema })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -280,22 +279,10 @@ export default function ImpostazioniPage() {
                   {TIPO_LABELS[tipo]}
                 </span>
               </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input type="text"
-                  value={tipoLabels[tipo]}
-                  onChange={e => setTipoLabels(prev => ({ ...prev, [tipo]: e.target.value }))}
-                  className="text-input"
-                  style={{ flex: 1 }} />
-                <div className="seg" style={{ flexShrink: 0 }}>
-                  {(['ore', 'giorni'] as const).map(u => (
-                    <button key={u} type="button"
-                      className={`seg-btn${unitaTipo[tipo] === u ? ' active' : ''}`}
-                      onClick={() => setUnitaTipo(prev => ({ ...prev, [tipo]: u }))}>
-                      {u}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <input type="text"
+                value={tipoLabels[tipo]}
+                onChange={e => setTipoLabels(prev => ({ ...prev, [tipo]: e.target.value }))}
+                className="text-input" />
             </div>
           )
         })}

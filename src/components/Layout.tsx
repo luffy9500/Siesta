@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useSettings } from '../hooks/useSettings'
 
 function IconHome() {
   return (
@@ -50,12 +51,21 @@ const TABS = [
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
+  const { settings, save } = useSettings()
   return (
     <div className="app-shell">
       <header className="app-header">
         <div className="app-logo">
           <img src="/favicon.svg" alt="" style={{ width: 26, height: 26, borderRadius: 7 }} />
           <span className="app-wordmark">siesta</span>
+        </div>
+        <div className="unit-seg">
+          <button
+            className={`unit-btn${settings.unita === 'ore' ? ' unit-active' : ''}`}
+            onClick={() => save({ unita: 'ore' })}>h</button>
+          <button
+            className={`unit-btn${settings.unita === 'giorni' ? ' unit-active' : ''}`}
+            onClick={() => save({ unita: 'giorni' })}>g</button>
         </div>
         <button className="hdr-btn" onClick={() => navigate('/impostazioni')} aria-label="Impostazioni">
           <IconGear />

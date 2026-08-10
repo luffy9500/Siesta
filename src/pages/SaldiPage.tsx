@@ -24,7 +24,7 @@ export default function SaldiPage() {
   const [saved, setSaved] = useState(false)
 
   const tipoLabel = (t: AbsenceType) => settings.tipo_labels[t] ?? TIPO_LABELS[t]
-  const unitaOf   = (t: AbsenceType) => settings.unita_tipo[t] ?? 'ore'
+  const unita     = settings.unita
   const oreG      = settings.ore_giornaliere
 
   const getExisting = (tipo: AbsenceType) =>
@@ -35,7 +35,7 @@ export default function SaldiPage() {
       const val = values[tipo]
       if (val !== undefined && val !== '') {
         const parsed = parseFloat(val)
-        const ore    = unitaOf(tipo) === 'giorni' ? parsed * oreG : parsed
+        const ore    = unita === 'giorni' ? parsed * oreG : parsed
         upsert(anno, mese, tipo, ore)
       }
     })
@@ -46,8 +46,8 @@ export default function SaldiPage() {
 
   const hasChanges = TIPI.some(t => values[t] !== undefined && values[t] !== '')
 
-  const fmtExisting = (tipo: AbsenceType, ore: number) =>
-    unitaOf(tipo) === 'giorni' ? `${(ore / oreG).toFixed(1)}g` : `${ore}h`
+  const fmtExisting = (_tipo: AbsenceType, ore: number) =>
+    unita === 'giorni' ? `${(ore / oreG).toFixed(1)}g` : `${ore}h`
 
   return (
     <div className="screen">
@@ -84,7 +84,6 @@ export default function SaldiPage() {
       {TIPI.map(tipo => {
         const existing = getExisting(tipo)
         const c        = TIPO_OKLCH[tipo]
-        const unita    = unitaOf(tipo)
         return (
           <div key={tipo} className="saldi-card"
             style={{

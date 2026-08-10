@@ -7,7 +7,8 @@ export interface UserSettings {
   giorni_lavorativi: number[] // 0=Dom, 1=Lun, ..., 6=Sab
   soglia_saldo_basso: number  // ore sotto cui mostrare avviso (0 = disabilitato)
   tipo_labels: Record<AbsenceType, string> // etichette personalizzate per i tipi
-  unita_tipo: Record<AbsenceType, 'ore' | 'giorni'> // unità di misura per ogni tipo
+  unita_tipo: Record<AbsenceType, 'ore' | 'giorni'> // unità di misura per ogni tipo (legacy)
+  unita: 'ore' | 'giorni'                          // unità globale (sovrascrive unita_tipo)
   tema: 'auto' | 'chiaro' | 'scuro'
   created_at: string
   updated_at: string

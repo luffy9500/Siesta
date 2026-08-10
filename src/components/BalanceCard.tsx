@@ -24,7 +24,7 @@ export default function BalanceCard({ tipo, saldoBusta, oreUsate, orePianificate
   const c = TIPO_OKLCH[tipo]
   const label  = settings.tipo_labels[tipo] ?? TIPO_LABELS[tipo]
   const oreG   = settings.ore_giornaliere
-  const unita  = settings.unita_tipo[tipo] ?? 'ore'
+  const unita  = settings.unita
   const hasData = saldoBusta !== null
 
   const oreDisponibili  = hasData ? Math.max(0, saldoBusta - oreUsate - orePianificate) : 0

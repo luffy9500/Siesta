@@ -40,7 +40,7 @@ export default function StatistichePage() {
   const [anno, setAnno] = useState(currentYear)
 
   const tipoLabel = (t: AbsenceType) => settings.tipo_labels[t] ?? TIPO_LABELS[t]
-  const unitaOf   = (t: AbsenceType) => settings.unita_tipo[t] ?? 'ore'
+  const unitaOf   = (_t: AbsenceType) => settings.unita
   const oreG      = settings.ore_giornaliere
 
   const fmtVal = (t: AbsenceType, ore: number) =>
