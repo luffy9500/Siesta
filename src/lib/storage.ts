@@ -33,6 +33,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   soglia_saldo_basso: 8,
   tipo_labels: { ferie: 'Ferie', permessi: 'Permessi', rol: 'ROL', malattia: 'Malattia' },
   unita_tipo: { ferie: 'ore', permessi: 'ore', rol: 'ore', malattia: 'ore' },
+  unita: 'ore',
   tema: 'auto',
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),

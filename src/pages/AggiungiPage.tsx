@@ -28,8 +28,7 @@ export default function AggiungiPage() {
   const [dataFine, setDataFine]   = useState(editAssenza?.data_fine ?? defaultDate)
   const [valueInput, setValueInput] = useState<string>(() => {
     if (!editAssenza) return ''
-    const u = settings.unita_tipo[editAssenza.tipo] ?? 'ore'
-    return u === 'giorni'
+    return settings.unita === 'giorni'
       ? String(editAssenza.ore / settings.ore_giornaliere)
       : String(editAssenza.ore)
   })
@@ -43,8 +42,7 @@ export default function AggiungiPage() {
       setTipo(editAssenza.tipo)
       setDataInizio(editAssenza.data_inizio)
       setDataFine(editAssenza.data_fine)
-      const u = settings.unita_tipo[editAssenza.tipo] ?? 'ore'
-      setValueInput(u === 'giorni'
+      setValueInput(settings.unita === 'giorni'
         ? String(editAssenza.ore / settings.ore_giornaliere)
         : String(editAssenza.ore))
       setNote(editAssenza.note ?? '')
@@ -52,7 +50,7 @@ export default function AggiungiPage() {
   }, [editId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const tipoLabel = (t: AbsenceType) => settings.tipo_labels[t] ?? TIPO_LABELS[t]
-  const unita   = settings.unita_tipo[tipo] ?? 'ore'
+  const unita   = settings.unita
   const oreG    = settings.ore_giornaliere
   const c       = TIPO_OKLCH[tipo]
 

@@ -67,7 +67,7 @@ export default function DashboardPage() {
   const ferieDisponibili = ferieBusta !== null
     ? Math.max(0, ferieBusta - ferieStats.oreUsate - ferieStats.orePianificate)
     : null
-  const ferieUnita = settings.unita_tipo['ferie'] ?? 'ore'
+  const ferieUnita = settings.unita
 
   const fmtFerie = (ore: number) =>
     ferieUnita === 'giorni' ? toGiorni(ore, oreG) : `${ore}h`
@@ -145,7 +145,7 @@ export default function DashboardPage() {
               const c = TIPO_OKLCH[a.tipo]
               const da = format(parseISO(a.data_inizio), 'd MMM', { locale: it })
               const al = format(parseISO(a.data_fine), 'd MMM', { locale: it })
-              const unitaA = settings.unita_tipo[a.tipo] ?? 'ore'
+              const unitaA = settings.unita
               const valStr = unitaA === 'giorni'
                 ? toGiorni(a.ore, oreG)
                 : `${a.ore}h`
