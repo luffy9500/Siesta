@@ -70,7 +70,7 @@ body {
 /* ── Safe area ─────────────────────────────────── */
 .pt-safe-top    { padding-top: calc(0.75rem + env(safe-area-inset-top)); }
 .pb-safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
-.pb-nav-safe    { padding-bottom: calc(var(--nav-h) + 26px + env(safe-area-inset-bottom)); }
+.pb-nav-safe    { padding-bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom)); }
 
 /* ── App shell ─────────────────────────────────── */
 .app-shell {
@@ -131,18 +131,18 @@ body {
 .unit-seg {
   display: flex;
   background: var(--surface-2);
-  border-radius: 8px;
-  padding: 2px;
-  gap: 1px;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
   border: 0.5px solid var(--line);
 }
 
 .unit-btn {
-  padding: 4px 10px;
-  border-radius: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
   border: none;
   font-family: var(--font-ui);
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.18s;
@@ -159,22 +159,22 @@ body {
 /* ── Tab bar ───────────────────────────────────── */
 .tab-bar {
   position: fixed;
-  bottom: calc(10px + env(safe-area-inset-bottom));
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 28px);
-  max-width: 402px;
-  height: var(--nav-h);
-  background: color-mix(in oklch, var(--surface) 85%, transparent);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  /* height covers nav + home-indicator safe area */
+  height: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  /* push items up out of the safe area zone */
+  padding-bottom: env(safe-area-inset-bottom);
+  background: color-mix(in oklch, var(--surface) 90%, transparent);
   backdrop-filter: saturate(180%) blur(24px);
   -webkit-backdrop-filter: saturate(180%) blur(24px);
-  border: 0.5px solid var(--line);
-  border-radius: 24px;
+  border-top: 0.5px solid var(--line);
+  border-radius: 20px 20px 0 0;
   display: flex;
   align-items: center;
   z-index: 20;
-  padding: 0 6px;
-  box-shadow: 0 2px 16px oklch(0 0 0 / 0.08), 0 0.5px 0 var(--line);
+  box-shadow: 0 -1px 0 var(--line), 0 -4px 20px oklch(0 0 0 / 0.06);
 }
 
 .tab-item {
