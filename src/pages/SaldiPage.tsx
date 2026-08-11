@@ -51,9 +51,8 @@ export default function SaldiPage() {
 
   return (
     <div className="screen">
-      <div style={{ marginBottom: 16 }}>
-        <div className="page-title">Saldi da busta paga</div>
-        <div className="page-sub">Inserisci i saldi riportati in busta ogni mese.</div>
+      <div style={{ marginBottom: 14 }}>
+        <div className="page-title">Saldi busta paga</div>
       </div>
 
       {/* Period selector */}
@@ -80,42 +79,47 @@ export default function SaldiPage() {
           }} />
       </div>
 
-      {/* Cards */}
-      {TIPI.map(tipo => {
-        const existing = getExisting(tipo)
-        const c        = TIPO_OKLCH[tipo]
-        return (
-          <div key={tipo} className="saldi-card"
-            style={{
-              background: c.tint,
-              borderColor: c.tintBorder,
-            }}>
-            <div style={{
-              fontSize: '0.73rem', fontWeight: 800,
-              color: c.text,
-              textTransform: 'uppercase', letterSpacing: '0.07em',
-              marginBottom: 8,
-            }}>
-              {tipoLabel(tipo)}
-            </div>
-            <div className="saldi-input-row">
+      {/* Compact grouped list */}
+      <div className="settings-group" style={{ marginBottom: 12 }}>
+        {TIPI.map(tipo => {
+          const existing = getExisting(tipo)
+          const c        = TIPO_OKLCH[tipo]
+          return (
+            <div key={tipo} className="set-row" style={{ padding: '11px 14px', gap: 10, cursor: 'text' }}
+              onClick={e => (e.currentTarget.querySelector('input') as HTMLInputElement)?.focus()}>
+              <span style={{
+                fontSize: '0.7rem', fontWeight: 700,
+                background: c.tint, color: c.text,
+                border: `1px solid ${c.tintBorder}`,
+                borderRadius: 999, padding: '3px 10px',
+                flexShrink: 0, minWidth: 72, textAlign: 'center',
+              }}>
+                {tipoLabel(tipo)}
+              </span>
+              <span style={{
+                fontSize: '0.78rem', color: 'var(--ink-faint)',
+                flex: 1,
+              }}>
+                {existing ? fmtExisting(tipo, existing.ore) : '—'}
+              </span>
               <input type="number" min="0" step="0.5"
-                placeholder={existing ? `${fmtExisting(tipo, existing.ore)} (attuale)` : (unita === 'giorni' ? 'es. 30' : 'es. 128')}
+                placeholder={unita === 'giorni' ? '0g' : '0h'}
                 value={values[tipo] ?? ''}
                 onChange={e => setValues(prev => ({ ...prev, [tipo]: e.target.value }))}
-                className="saldi-input" />
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: c.text }}>
-                {unita}
+                className="saldi-compact-input"
+                style={{
+                  width: 64, textAlign: 'right',
+                  border: 'none', outline: 'none',
+                  fontFamily: 'var(--font-ui)', fontSize: '0.95rem', fontWeight: 700,
+                  background: 'transparent', color: 'var(--ink)',
+                }} />
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-faint)', minWidth: 16 }}>
+                {unita === 'giorni' ? 'g' : 'h'}
               </span>
             </div>
-            {existing && (
-              <div style={{ fontSize: '0.68rem', color: c.text, opacity: 0.7, marginTop: 6 }}>
-                Ultimo: <strong style={{ opacity: 1 }}>{fmtExisting(tipo, existing.ore)}</strong>
-              </div>
-            )}
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
 
       <button onClick={handleSave} disabled={!hasChanges} className="btn-primary"
         style={{ marginTop: 4 }}>
@@ -123,8 +127,9 @@ export default function SaldiPage() {
       </button>
 
       {saldi.length > 0 && (
-        <div className="storico-list">
+        <>
           <div className="section-label">Storico</div>
+          <div className="storico-list">
           {saldi.slice(0, 20).map(s => {
             const c = TIPO_OKLCH[s.tipo]
             return (
@@ -146,7 +151,8 @@ export default function SaldiPage() {
               </div>
             )
           })}
-        </div>
+          </div>
+        </>
       )}
     </div>
   )
