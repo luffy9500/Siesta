@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
 import { useSaldi } from '../hooks/useSaldi'
@@ -46,8 +46,31 @@ export default function SaldiPage() {
 
   const hasChanges = TIPI.some(t => values[t] !== undefined && values[t] !== '')
 
-  const fmtExisting = (_tipo: AbsenceType, ore: number) =>
+  const fmtOre = (ore: number) =>
     unita === 'giorni' ? `${(ore / oreG).toFixed(1)}g` : `${ore}h`
+
+  // Group storico by month, most recent first
+  const storicoGrouped = useMemo(() => {
+    const sorted = [...saldi].sort((a, b) =>
+      b.anno !== a.anno ? b.anno - a.anno : b.mese - a.mese
+    )
+    const groups: { key: string; label: string; entries: typeof saldi }[] = []
+    sorted.forEach(s => {
+      const key = `${s.anno}-${s.mese}`
+      let g = groups.find(g => g.key === key)
+      if (!g) {
+        const monthLabel = MESI.find(m => m.value === s.mese)?.label ?? ''
+        g = { key, label: `${monthLabel} ${s.anno}`, entries: [] }
+        groups.push(g)
+      }
+      g.entries.push(s)
+    })
+    // sort entries within each group by TIPI order
+    groups.forEach(g => {
+      g.entries.sort((a, b) => TIPI.indexOf(a.tipo) - TIPI.indexOf(b.tipo))
+    })
+    return groups.slice(0, 12) // last 12 months
+  }, [saldi])
 
   return (
     <div className="screen">
@@ -100,10 +123,10 @@ export default function SaldiPage() {
                 fontSize: '0.78rem', color: 'var(--ink-faint)',
                 flex: 1,
               }}>
-                {existing ? fmtExisting(tipo, existing.ore) : '—'}
+                {existing ? fmtOre(existing.ore) : '—'}
               </span>
               <input type="number" min="0" step="0.5"
-                placeholder={unita === 'giorni' ? '0g' : '0h'}
+                placeholder="0"
                 value={values[tipo] ?? ''}
                 onChange={e => setValues(prev => ({ ...prev, [tipo]: e.target.value }))}
                 className="saldi-compact-input"
@@ -126,32 +149,42 @@ export default function SaldiPage() {
         {saved ? '✓ Salvato!' : 'Salva saldi'}
       </button>
 
-      {saldi.length > 0 && (
+      {storicoGrouped.length > 0 && (
         <>
           <div className="section-label">Storico</div>
-          <div className="storico-list">
-          {saldi.slice(0, 20).map(s => {
-            const c = TIPO_OKLCH[s.tipo]
-            return (
-              <div key={s.id} className="storico-row">
-                <span style={{
-                  fontSize: '0.7rem', fontWeight: 700,
-                  background: c.tint, color: c.text,
-                  border: `1px solid ${c.tintBorder}`,
-                  borderRadius: 999, padding: '2px 9px',
-                }}>
-                  {tipoLabel(s.tipo)}
-                </span>
-                <span style={{ fontSize: '0.72rem', color: 'var(--ink-faint)', textTransform: 'capitalize' }}>
-                  {MESI.find(m => m.value === s.mese)?.label} {s.anno}
-                </span>
-                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--ink)' }}>
-                  {fmtExisting(s.tipo, s.ore)}
-                </span>
+          {storicoGrouped.map(group => (
+            <div key={group.key} style={{ marginBottom: 8 }}>
+              <div style={{
+                fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.05em',
+                color: 'var(--ink-faint)', textTransform: 'capitalize',
+                marginBottom: 4, paddingLeft: 2,
+              }}>
+                {group.label}
               </div>
-            )
-          })}
-          </div>
+              <div className="storico-list" style={{ margin: 0 }}>
+                {group.entries.map(s => {
+                  const c = TIPO_OKLCH[s.tipo]
+                  return (
+                    <div key={s.id} className="storico-row">
+                      <span style={{
+                        fontSize: '0.7rem', fontWeight: 700,
+                        background: c.tint, color: c.text,
+                        border: `1px solid ${c.tintBorder}`,
+                        borderRadius: 999, padding: '2px 9px',
+                        flexShrink: 0,
+                      }}>
+                        {tipoLabel(s.tipo)}
+                      </span>
+                      <div style={{ flex: 1 }} />
+                      <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--ink)' }}>
+                        {fmtOre(s.ore)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </>
       )}
     </div>
