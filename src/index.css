@@ -166,9 +166,7 @@ body {
   height: calc(var(--nav-h) + env(safe-area-inset-bottom));
   /* push items up out of the safe area zone */
   padding-bottom: env(safe-area-inset-bottom);
-  background: color-mix(in oklch, var(--surface) 90%, transparent);
-  backdrop-filter: saturate(180%) blur(24px);
-  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  background: var(--surface);
   border-top: 0.5px solid var(--line);
   border-radius: 0;
   display: flex;
