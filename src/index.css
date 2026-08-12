@@ -40,7 +40,7 @@
   --r-card:  12px;
   --r-input: 10px;
   --pad:     16px;
-  --nav-h:   66px;
+  --nav-h:   54px;
 }
 
 html.dark {
@@ -166,9 +166,6 @@ body {
   max-width: 430px;
   margin-left: auto;
   margin-right: auto;
-  /* height covers nav + home-indicator safe area */
-  height: calc(var(--nav-h) + env(safe-area-inset-bottom));
-  /* push items up out of the safe area zone */
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--surface);
   border-top: 0.5px solid var(--line);
